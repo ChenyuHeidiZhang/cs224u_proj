@@ -20,7 +20,7 @@ def load_neuron_repr():
     return all_layer_repr
 
 
-def visualize_cluster(cluster_id, num_neurons_per_layer):
+def visualize_cluster_layer_neuron_count(cluster_id, num_neurons_per_layer):
     plt.figure(figsize=(20, 10))
     plt.bar(range(13), num_neurons_per_layer)
     plt.xlabel("Layer")
@@ -28,13 +28,27 @@ def visualize_cluster(cluster_id, num_neurons_per_layer):
     plt.title(f"Cluster {cluster_id} number of neurons per layer")
     plt.savefig(f"visualizations/cluster_neuron_count/cluster_{cluster_id}.png")
 
+def visualize_cluster_scatter_plot(cluster_id, layer_indices, neuron_indices):
+    plt.figure(figsize=(20, 10))
+    plt.scatter(layer_indices, neuron_indices)
+    plt.xlabel("Layer")
+    plt.ylabel("Neuron index")
+    plt.title(f"Cluster {cluster_id} scatter plot of neurons in each layer")
+    plt.savefig(f"visualizations/cluster_scatter_plot/cluster_{cluster_id}.png")
 
-def compute_clusters(all_layer_repr, tokenizer, num_clusters=3, num_top_tokens=10):
-    # input tensors all_layer_repr is of shape (N, D)
-    # where N is the numbers of neurons (num_layers * num_neurons_per_layer = 9984), and D is the dimensionality (vocab size)
+def save_cluster(cluster_labels):
+    clusters = {}
+    for cluster_id in range(max(cluster_labels)+1):
+        # find the indices of neurons in the the same cluster
+        indices = np.where(cluster_labels == cluster_id)[0]
+        clusters[cluster_id] = indices.tolist()
+    with open('clusters.json', 'w') as f:
+        json.dump(clusters, f)
 
+def find_dissimilarity_matrix(all_layer_repr):
     # Normalize the input tensor
     print('Normalizing input tensor')
+    # normalize each neuron's representation to be a unit vector
     input1_norm = torch.nn.functional.normalize(all_layer_repr, p=2, dim=1)
     input2_norm = input1_norm.clone()
 
@@ -46,9 +60,28 @@ def compute_clusters(all_layer_repr, tokenizer, num_clusters=3, num_top_tokens=1
 
     # Convert similarity to dissimilarity matrix
     dissimilarity = 1 - similarity
+    return dissimilarity
+
+def explore_cluster_distance_thresholds(dissimilarity, thresholds):
+    for threshold in thresholds:
+        clustering = AgglomerativeClustering(n_clusters=None, metric='precomputed', linkage='complete', distance_threshold=threshold)
+        cluster_labels = clustering.fit_predict(dissimilarity) # cluster label for each neuron
+        cluster_size = max(cluster_labels) + 1
+        print(f"Threshold: {threshold}, Number of clusters: {cluster_size}")
+
+def compute_clusters(all_layer_repr, tokenizer, num_clusters=3, num_top_tokens=10):
+    # input tensors all_layer_repr is of shape (N, D)
+    # where N is the numbers of neurons (num_layers * num_neurons_per_layer = 9984), and D is the dimensionality (vocab size)
+
+    # Compute the dissimilarity matrix
+    dissimilarity = find_dissimilarity_matrix(all_layer_repr)
+
+    explore_cluster_distance_thresholds(dissimilarity, [0.5, 0.9, 0.95, 0.975, 0.9875, 0.99])
 
     # Apply Agglomerative Hierarchical Clustering
+    # find clustering with a maximum number of neurons in each cluster
     clustering = AgglomerativeClustering(n_clusters=num_clusters, metric='precomputed', linkage='complete', distance_threshold=None)
+    # clustering = AgglomerativeClustering(n_clusters=None, metric='precomputed', linkage='complete', distance_threshold=0.97)
     cluster_labels = clustering.fit_predict(dissimilarity) # cluster label for each neuron
 
     # Print the cluster labels
@@ -76,11 +109,15 @@ def compute_clusters(all_layer_repr, tokenizer, num_clusters=3, num_top_tokens=1
         layer_indices = indices // 768
         # find the neuron index within each layer
         neuron_indices = indices % 768
-        # find number of selected neurons in each layer
-        num_neurons_per_layer = np.bincount(layer_indices)
+        # find number of selected neurons in each layer, there is a bin for each layer even if there is no neuron in that layer
+        num_neurons_per_layer = np.zeros(13)
+        for layer_id in range(13):
+            num_neurons_per_layer[layer_id] = np.sum(layer_indices == layer_id)
         print(f"Cluser {cluster_id} number of neurons: {indices.shape[0]}")
         print(f"Cluser {cluster_id} number of neurons per layer: {num_neurons_per_layer}")
-        visualize_cluster(cluster_id, num_neurons_per_layer)
+        # visualize_cluster_layer_neuron_count(cluster_id, num_neurons_per_layer)
+        visualize_cluster_scatter_plot(cluster_id, layer_indices, neuron_indices)
+
     
     # TODO: plot the top tokens for each cluster with their representations
 
