@@ -57,6 +57,8 @@ def compute_clusters(all_layer_repr, tokenizer, num_clusters=3, num_top_tokens=1
 
         print("Cluster {}: {}".format(cluster_id, top_k_tokens))
 
+    # TODO: plot the neurons with their cluster labels
+    # TODO: plot the top tokens for each cluster with their representations
 
 
 def test():
