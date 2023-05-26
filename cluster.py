@@ -1,6 +1,7 @@
 from tqdm import tqdm
 import json
 import numpy as np
+import matplotlib.pyplot as plt
 import torch
 from sklearn.cluster import AgglomerativeClustering
 from transformers import AutoTokenizer, BertModel, BertConfig
@@ -12,15 +13,25 @@ def load_neuron_repr():
     neuron_representations_avg = {}
     for i in range(NUM_LAYERS):
         with open('neuron_repr/neuron_repr_{}.json'.format(i), 'r') as f:
-            neuron_representations_avg[i] = torch.tensor(json.load(f)).t()  # shape (D, Ni) -> (Ni, D)
+            neuron_representations_avg[i] = torch.tensor(json.load(f)).t()  # shape (vocab_size, num_neurons) -> (num_neurons, vocab_size); num_neurons is hidden_dim
 
     # concatenate all layers
-    all_layer_repr = torch.cat([neuron_representations_avg[i] for i in range(NUM_LAYERS)], dim=0)
+    all_layer_repr = torch.cat([neuron_representations_avg[i] for i in range(NUM_LAYERS)], dim=0) # (num_layers * num_neurons, vocab_size)
     return all_layer_repr
 
+
+def visualize_cluster(cluster_id, num_neurons_per_layer):
+    plt.figure(figsize=(20, 10))
+    plt.bar(range(13), num_neurons_per_layer)
+    plt.xlabel("Layer")
+    plt.ylabel("Number of neurons")
+    plt.title(f"Cluster {cluster_id} number of neurons per layer")
+    plt.savefig(f"visualizations/cluster_neuron_count/cluster_{cluster_id}.png")
+
+
 def compute_clusters(all_layer_repr, tokenizer, num_clusters=3, num_top_tokens=10):
-    # input tensors neuron_representations_avg is of shape (N, D)
-    # where N is the numbers of vectors, and D is the dimensionality
+    # input tensors all_layer_repr is of shape (N, D)
+    # where N is the numbers of neurons (num_layers * num_neurons_per_layer = 9984), and D is the dimensionality (vocab size)
 
     # Normalize the input tensor
     print('Normalizing input tensor')
@@ -38,18 +49,18 @@ def compute_clusters(all_layer_repr, tokenizer, num_clusters=3, num_top_tokens=1
 
     # Apply Agglomerative Hierarchical Clustering
     clustering = AgglomerativeClustering(n_clusters=num_clusters, metric='precomputed', linkage='complete', distance_threshold=None)
-    cluster_labels = clustering.fit_predict(dissimilarity)
+    cluster_labels = clustering.fit_predict(dissimilarity) # cluster label for each neuron
 
     # Print the cluster labels
     print(cluster_labels)
 
     # Find top-k tokens that are activated by neurons in the same cluster
     for cluster_id in range(max(cluster_labels)+1):
-        # find the indices of the tokens that are activated by neurons in the same cluster
+        # find the indices of neurons in the the same cluster
         indices = np.where(cluster_labels == cluster_id)[0]
         # print(indices)
         # aggregate activations of neurons in the cluster
-        cluster_activations = torch.sum(all_layer_repr[indices], dim=0)
+        cluster_activations = torch.sum(all_layer_repr[indices], dim=0) # D
         # find the indices of the top-k tokens
         top_k_indices = torch.topk(cluster_activations, k=num_top_tokens)[1]
         # convert indices to tokens
@@ -57,7 +68,20 @@ def compute_clusters(all_layer_repr, tokenizer, num_clusters=3, num_top_tokens=1
 
         print("Cluster {}: {}".format(cluster_id, top_k_tokens))
 
-    # TODO: plot the neurons with their cluster labels
+    # plot the neurons with their cluster labels
+    for cluster_id in range(max(cluster_labels)+1):
+        # find the indices of neurons in the the same cluster
+        indices = np.where(cluster_labels == cluster_id)[0]
+        # find the layer of each selected neuron
+        layer_indices = indices // 768
+        # find the neuron index within each layer
+        neuron_indices = indices % 768
+        # find number of selected neurons in each layer
+        num_neurons_per_layer = np.bincount(layer_indices)
+        print(f"Cluser {cluster_id} number of neurons: {indices.shape[0]}")
+        print(f"Cluser {cluster_id} number of neurons per layer: {num_neurons_per_layer}")
+        visualize_cluster(cluster_id, num_neurons_per_layer)
+    
     # TODO: plot the top tokens for each cluster with their representations
 
 
