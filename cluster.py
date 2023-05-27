@@ -122,7 +122,8 @@ def evaluate_cluster(num_clusters=3, distance_threshold=None):
                 input_ids, attention_mask = temp["input_ids"].to(device), temp["attention_mask"].to(device)
                 extended_attention_mask = model.get_extended_attention_mask(attention_mask, input_ids.size()).to(device)
                 hidden_states= model.embeddings(input_ids=input_ids)
-                for layer_id in range(NUM_LAYERS - 1):
+                hidden_states[:, :, layer_indices[0]] = 0
+                for layer_id in range(1, NUM_LAYERS):
                     hidden_states = model.encoder.layer[layer_id](hidden_states, attention_mask=extended_attention_mask)[0]
                     # hidden_states has shape (batch_size, sequence_length, hidden_size)
                     # for each neuron in the layer, set the activation to 0
