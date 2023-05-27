@@ -3,64 +3,16 @@ import json
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+from collections import defaultdict
 import torch
 from sklearn.cluster import AgglomerativeClustering
 from transformers import AutoTokenizer, BertModel, BertConfig
+from datasets import load_dataset
 
-NUM_LAYERS = 13
-BATCH_SIZE = 64
-HIDDEN_DIM = 768
+from constants import NUM_LAYERS, BATCH_SIZE, HIDDEN_DIM
+from utils import load_neuron_repr, save_cluster, load_cluster
+from visualization import visualize_cluster_layer_neuron_count, visualize_cluster_scatter_plot, plot_cluster_top_tokens_neuron, plot_cluster_neurons
 
-def load_neuron_repr():
-    print('Loading neuron representations')
-    neuron_representations_avg = {}
-    for i in range(NUM_LAYERS):
-        with open('neuron_repr/neuron_repr_{}.json'.format(i), 'r') as f:
-            neuron_representations_avg[i] = torch.tensor(json.load(f)).t()  # shape (vocab_size, num_neurons) -> (num_neurons, vocab_size); num_neurons is hidden_dim
-
-    # concatenate all layers
-    all_layer_repr = torch.cat([neuron_representations_avg[i] for i in range(NUM_LAYERS)], dim=0) # (num_layers * num_neurons, vocab_size)
-    return all_layer_repr
-
-def save_cluster(cluster_labels, num_clusters, distance_threshold):
-    dir = f'cluster_outputs/n_clusters{num_clusters}_distance_threshold_{distance_threshold}/'
-    if not os.path.exists(dir):
-        os.makedirs(dir)
-    clusters = {}
-    for cluster_id in range(max(cluster_labels)+1):
-        # find the indices of neurons in the the same cluster
-        indices = np.where(cluster_labels == cluster_id)[0]
-        clusters[cluster_id] = indices.tolist()
-    with open(os.path.join(dir, 'cluster_id_to_neurons.json'), 'w') as f:
-        json.dump(clusters, f)
-
-def load_cluster(num_clusters, distance_threshold):
-    dir = f'cluster_outputs/n_clusters{num_clusters}_distance_threshold_{distance_threshold}/'
-    with open(os.path.join(dir, 'cluster_id_to_neurons.json'), 'r') as f:
-        clusters = json.load(f)
-    return clusters
-
-def visualize_cluster_layer_neuron_count(cluster_id, num_clusters, distance_threshold, num_neurons_per_layer):
-    dir = f"visualizations/n_clusters{num_clusters}_distance_threshold_{distance_threshold}/cluster_neuron_count"
-    if not os.path.exists(dir):
-        os.makedirs(dir)
-    plt.figure(figsize=(20, 10))
-    plt.bar(range(NUM_LAYERS), num_neurons_per_layer)
-    plt.xlabel("Layer")
-    plt.ylabel("Number of neurons")
-    plt.title(f"Cluster {cluster_id} number of neurons per layer")
-    plt.savefig(os.path.join(dir, f"cluster_{cluster_id}.png"))
-
-def visualize_cluster_scatter_plot(cluster_id, num_clusters, distance_threshold, layer_indices, neuron_indices):
-    dir = f"visualizations/n_clusters{num_clusters}_distance_threshold_{distance_threshold}/cluster_scatter_plot"
-    if not os.path.exists(dir):
-        os.makedirs(dir)
-    plt.figure(figsize=(20, 10))
-    plt.scatter(layer_indices, neuron_indices)
-    plt.xlabel("Layer")
-    plt.ylabel("Neuron index")
-    plt.title(f"Cluster {cluster_id} scatter plot of neurons in each layer")
-    plt.savefig(os.path.join(dir, f"cluster_{cluster_id}.png"))
 
 def find_dissimilarity_matrix(all_layer_repr):
     # Normalize the input tensor
@@ -108,50 +60,6 @@ def get_cluster_top_tokens(all_layer_repr, tokenizer, cluster_labels, num_cluste
             cluster_id_to_top_token_indices[cluster_id] = top_k_indices
     return cluster_id_to_top_token_indices
 
-def plot_cluster_neurons(cluster_labels, num_clusters, distance_threshold):
-    # for cluster_id in range(max(cluster_labels)+1):
-    for cluster_id in range(min(max(cluster_labels)+1, 50)):
-        # find the indices of neurons in the the same cluster
-        indices = np.where(cluster_labels == cluster_id)[0]
-        # find the layer of each selected neuron
-        layer_indices = indices // HIDDEN_DIM
-        # find the neuron index within each layer
-        neuron_indices = indices % HIDDEN_DIM
-        # find number of selected neurons in each layer, there is a bin for each layer even if there is no neuron in that layer
-        num_neurons_per_layer = np.zeros(NUM_LAYERS)
-        for layer_id in range(NUM_LAYERS):
-            num_neurons_per_layer[layer_id] = np.sum(layer_indices == layer_id)
-        print(f"Cluser {cluster_id} number of neurons: {indices.shape[0]}")
-        print(f"Cluser {cluster_id} number of neurons per layer: {num_neurons_per_layer}")
-        # visualize_cluster_layer_neuron_count(cluster_id, num_clusters, distance_threshold, num_neurons_per_layer)
-        visualize_cluster_scatter_plot(cluster_id, num_clusters, distance_threshold, layer_indices, neuron_indices)
-
-def plot_cluster_top_tokens_neuron(cluster_id_to_top_token_indices, all_layer_repr, cluster_labels, num_clusters, distance_threshold, num_top_tokens):
-    dir = f"visualizations/n_clusters{num_clusters}_distance_threshold_{distance_threshold}/cluster_top_tokens"
-    if not os.path.exists(dir):
-        os.makedirs(dir)
-    # visualize a max of 50 clusters
-    for cluster_id in range(min(max(cluster_labels)+1, 50)):
-        top_tokens = cluster_id_to_top_token_indices[cluster_id]
-        # plot a heatmap, where y axis is each token_id, x axis is each neuron, and the color is the activation of the neuron on the token
-        neurons_all_tokens = []
-        for token_id in top_tokens:
-            # find the representation of the token
-            neurons = all_layer_repr[:, token_id] # (N, 1)
-            neurons_all_tokens.append(neurons)
-        neurons_all_tokens = torch.stack(neurons_all_tokens, dim=1).T.numpy() # (num_top_tokens, N)
-        # N is too large, put N neurons into 100 bin and calculate sum of each bin, so that the shape of neurons_all_tokens is a numpy array (num_top_tokens, 100)
-        neurons_all_tokens = np.array([np.sum(neurons_all_tokens[:, i*100:(i+1)*100], axis=1) for i in range(100)]).T
-        # # find indices of neurons in this cluster
-        # indices = np.where(cluster_labels == cluster_id)[0]
-        # # also plot indices of neurons in this cluster on the same plot and color them differently
-        # neurons_all_tokens[:, indices] = 100
-        plt.figure(figsize=(20, 10))
-        plt.xlabel('Neuron in 100 bins')
-        plt.ylabel('Token')
-        plt.title(f'Cluster {cluster_id} top {num_top_tokens} tokens')
-        plt.imshow(neurons_all_tokens, cmap='hot', interpolation='nearest')
-        plt.savefig(os.path.join(dir, f"cluster_{cluster_id}_top_{num_top_tokens}_tokens.png"))
 
 def compute_clusters(all_layer_repr, tokenizer, num_clusters=3, distance_threshold=None, num_top_tokens=10):
     # input tensors all_layer_repr is of shape (N, D)
@@ -179,28 +87,60 @@ def compute_clusters(all_layer_repr, tokenizer, num_clusters=3, distance_thresho
     # plot the top tokens for each cluster with their representations
     plot_cluster_top_tokens_neuron(cluster_id_to_top_token_indices, all_layer_repr, cluster_labels, num_clusters, distance_threshold, num_top_tokens)
     
+def evaluate_cluster(num_clusters=3, distance_threshold=None):
+    # load cluster
+    clusters = load_cluster(num_clusters=num_clusters, distance_threshold=distance_threshold)
+    print("Cluster loaded")
 
-def test():
-    repr = torch.tensor([[1.4, 0], [0, 11], [0, 1]])  # first neuron activates on the 1st token, second neuron activates on the 2nd & 3rd token
-    repr1 = torch.tensor([[1, 0], [0, 11], [0, 2]])  # first neuron activates on the 1st token, second neuron activates on the 2nd & 3rd token
-    all_layer_repr = {0: repr.t(), 1: repr1.t()}
-    # combine all layers
-    all_layer_repr = torch.cat([all_layer_repr[i] for i in range(2)], dim=0)
-    print(all_layer_repr.shape)  # (4, 3)
-
+    # load model 
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(device)
     tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
-    compute_clusters(all_layer_repr, tokenizer, num_clusters=2, num_top_tokens=2)
+    tokenizer.save_pretrained('tokenizer_info')
+    config = BertConfig.from_pretrained("bert-base-uncased", output_hidden_states=True)
+    model = BertModel.from_pretrained("bert-base-uncased", config=config).to(device)
+    print("Model loaded")
+
+    # load data
+    yelp = load_dataset("yelp_review_full")
+    dataset = yelp["test"]["text"][:10000] # for development purpose, only use the first 10000 examples in yelp["test"]["text"]
+    print("Dataset loaded")
+
+    # for each cluster, for neurons in that cluster, manually set the activation to 0
+    for cluster_id in range(num_clusters):
+        neuron_indices = clusters[str(cluster_id)]
+        # group by layer id
+        layer_indices = defaultdict(list)
+        for neuron_index in neuron_indices:
+            layer_id = neuron_index // 768
+            layer_indices[layer_id].append(neuron_index % 768)
+        with torch.no_grad():
+            for start_index in tqdm(range(0, len(dataset), BATCH_SIZE)):
+                batch = dataset[start_index: start_index+BATCH_SIZE]
+                temp = tokenizer.batch_encode_plus(
+                    batch, add_special_tokens=True, padding=True, truncation=True, max_length=config.max_position_embeddings, return_tensors='pt', return_attention_mask=True)
+                input_ids, attention_mask = temp["input_ids"].to(device), temp["attention_mask"].to(device)
+                extended_attention_mask = model.get_extended_attention_mask(attention_mask, input_ids.size()).to(device)
+                hidden_states= model.embeddings(input_ids=input_ids)
+                for layer_id in range(NUM_LAYERS - 1):
+                    hidden_states = model.encoder.layer[layer_id](hidden_states, attention_mask=extended_attention_mask)[0]
+                    # hidden_states has shape (batch_size, sequence_length, hidden_size)
+                    # for each neuron in the layer, set the activation to 0
+                    hidden_states[:, :, layer_indices[layer_id]] = 0
+                
+    # TODO: compute the accuracy of the model on the dataset with and without the cluster
 
 
 def run():
     all_layer_repr = load_neuron_repr()
     tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
     # one of num_cluster and distance_threshold must be None
-    compute_clusters(all_layer_repr, tokenizer, num_clusters=20, distance_threshold=None, num_top_tokens=10)
-    compute_clusters(all_layer_repr, tokenizer, num_clusters=500, distance_threshold=None, num_top_tokens=10)
-    compute_clusters(all_layer_repr, tokenizer, num_clusters=None, distance_threshold=0.999, num_top_tokens=10)
+    # compute_clusters(all_layer_repr, tokenizer, num_clusters=20, distance_threshold=None, num_top_tokens=10)
+    compute_clusters(all_layer_repr, tokenizer, num_clusters=50, distance_threshold=None, num_top_tokens=10)
+    # compute_clusters(all_layer_repr, tokenizer, num_clusters=500, distance_threshold=None, num_top_tokens=10)
+    # compute_clusters(all_layer_repr, tokenizer, num_clusters=None, distance_threshold=0.999, num_top_tokens=10)
 
 
 if __name__ == '__main__':
-    # test()
     run()
+    # evaluate_cluster(num_clusters=20, distance_threshold=None)
