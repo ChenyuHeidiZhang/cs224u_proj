@@ -4,7 +4,18 @@ import numpy as np
 import torch
 import matplotlib.pyplot as plt
 from constants import *
+from cluster import find_dissimilarity_matrix
 
+def visualize_dissimilarity_matrix(all_layer_repr):
+    # TODO: N is too large, put them into bins
+    dissimilarity = find_dissimilarity_matrix(all_layer_repr)
+    plt.figure(figsize=(20, 20))
+    plt.imshow(dissimilarity, cmap='hot', interpolation='nearest')
+    plt.xlabel("Neuron index")
+    plt.ylabel("Neuron index")
+    plt.title("Dissimilarity matrix")
+    plt.legend()
+    plt.savefig(os.path.join(VISUALIZATION_DIR, f"dissimilarity_matrix.png"), dpi=400)
 
 def visualize_cluster_layer_neuron_count(cluster_id, num_clusters, distance_threshold, num_neurons_per_layer):
     dir = f"{VISUALIZATION_DIR}/n_clusters{num_clusters}_distance_threshold_{distance_threshold}/cluster_neuron_count"

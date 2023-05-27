@@ -11,7 +11,7 @@ from datasets import load_dataset
 
 from constants import *
 from utils import load_neuron_repr, save_cluster, load_cluster
-from visualization import visualize_cluster_layer_neuron_count, visualize_cluster_scatter_plot, plot_cluster_top_tokens_neuron, plot_cluster_neurons
+from visualization import *
 
 
 def find_dissimilarity_matrix(all_layer_repr):
