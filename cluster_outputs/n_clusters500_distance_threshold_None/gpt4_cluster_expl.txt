@@ -1,0 +1,41 @@
+Cluster 0: This cluster seems to be connected with finance-related reviews, including keywords like 'earning', 'income', 'discharged', and 'owed'.
+
+Cluster 1: It's a bit challenging to determine a clear theme from this cluster. However, 'vaguely', 'orient', and 'benz' might imply a discussion about vehicle related businesses or experiences.
+
+Cluster 2: This cluster could be related to reviews discussing local businesses or specific locations in Massachusetts. Keywords like 'trophy', 'vase', and 'senate' may suggest certain types of establishments or events.
+
+Cluster 3: The presence of terms like 'orioles', 'interpreted', 'analyze', 'bulbs' suggest that this cluster might represent a mixture of topics possibly relating to home improvement businesses or analysis of customer service.
+
+Cluster 4: This cluster might be associated with geographic regions or specific locations, with keywords like 'zones', 'centers', 'harvey', 'implement', 'separated' implying discussion of different areas within a business or city.
+
+Cluster 5: Keywords like 'breed', 'tribe', 'jerseys', 'clone' might indicate that this cluster is associated with sports or related merchandise reviews.
+
+Cluster 6: This cluster appears to describe physical experiences or conditions with words like 'linger', 'hotter', 'heaviest', 'sweaty'. This might indicate reviews describing physical conditions at an establishment.
+
+Cluster 7: This cluster seems to involve sensory experiences with words like 'flavors', 'scent', 'hugged', 'dresses', 'patterns'. These might come from reviews about restaurants, clothing stores, or other places where taste and smell are prominent.
+
+Cluster 8: This cluster might be related to construction or building materials with words like 'adobe', 'asbestos', 'quartz', 'cavity' indicating reviews about building or construction-related businesses.
+
+Cluster 9: The emotional and sensory terms like 'heaving', 'moaning', 'sighed', 'giggled' suggest that this cluster could represent reviews discussing personal experiences or interactions at businesses.
+
+Cluster 10: This cluster seems to be related to time or historic events with keywords like 'obama', '1969', '2008'. This could include discussions about businesses with historical significance or events.
+
+Cluster 11: This cluster might be associated with reviews discussing crime or negative events, with words like 'transmitted', 'murderous', 'invade', 'havoc'.
+
+Cluster 12: This cluster appears to be about technology or electronic goods, with words like 'goods', 'nintendo', 'mouse', 'computers', 'media' indicating reviews about electronics stores or tech-related businesses.
+
+Cluster 13: This cluster could be related to historical or colonial places or experiences, with words like 'occupants', 'colony', 'intervals', 'touches'.
+
+Cluster 14: The specific theme of this cluster is hard to determine due to a mixture of partial words and some complete words. It might relate to diverse topics or industries.
+
+Cluster 15: With words like 'demolition', 'siding', 'dentistry', 'landscape', 'drainage', this cluster might be associated with construction, home improvement, or health-related businesses.
+
+Cluster 16: This cluster seems to relate to geographic regions or specific locations, with words like 'blades', 'tampa', 'mendoza', 'pennsylvania' indicating reviews about places or establishments in certain areas.
+
+Cluster 17: This cluster might be associated with financial or real estate businesses with words like 'bays', 'loans', 'asset', 'powerhouse', 'footprint'.
+
+Cluster 18: This cluster appears to involve a mixture of topics, possibly relating to businesses involving imports, possibly antiques or unique goods, with words like 'mature', 'sealed', 'skeleton', 'imports'.
+
+Cluster 19: This cluster might revolve around family activities or events with words like 'cousins', 'sheriff', 'contestants', 'landmarks' suggesting reviews about family-friendly places or events.
+
+Cluster 20: This cluster seems to involve descriptive language about experiences or conditions, with words like 'fiery', 'dripped', 'creaked', 'padded'. This might indicate reviews discussing physical conditions or unique experiences at an establishment.

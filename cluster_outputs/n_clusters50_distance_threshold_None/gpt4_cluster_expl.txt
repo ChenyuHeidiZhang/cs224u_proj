@@ -1,0 +1,41 @@
+Cluster 0: This cluster seems to revolve around conflict or issues in service, with words like 'angered', 'interfering', 'appeals', which might relate to negative reviews or complaints.
+
+Cluster 1: This cluster could be associated with reviews addressing customer service interactions, including terms like 'apologize', 'calmly', 'disgrace', 'apology', suggesting communication and sentiment aspects.
+
+Cluster 2: This cluster seems to refer to themed restaurants or events, with words like 'referee', 'sharks', 'dinosaurs', 'godzilla', which could be related to unique or themed experiences described in the reviews.
+
+Cluster 3: With words like 'fargo', 'technologies', 'stores', 'depot', 'vehicles', this cluster might be associated with reviews about retail or tech-related businesses.
+
+Cluster 4: This cluster appears to have keywords related to the perception of businesses, with words like 'swiftly', 'victorious', 'discipline', 'prestige', and 'rising' suggesting discussions about businesses' performance or status.
+
+Cluster 5: This cluster contains partial words and some complete words like 'crop', 'simulate', 'colonies', 'creation', which might relate to diverse topics or industries.
+
+Cluster 6: With words such as 'authorization', 'dormant', 'author', 'permission', 'frequency', this cluster might be related to reviews discussing rules, permissions, or official procedures.
+
+Cluster 7: This cluster might refer to themed businesses or specific establishments with words like 'mafia', 'tao', 'brawl', 'pact', 'dynasty' suggesting unique or themed experiences.
+
+Cluster 8: This cluster could be related to individual names or specific places with words like 'surgeon', 'anderson', 'joe', 'reynolds', which could be people or places mentioned in reviews.
+
+Cluster 9: This cluster seems to involve positive reviews or upscale businesses, with words like 'collegiate', 'plush', 'favorite', 'definitive', 'luxury', 'beautiful' suggesting high quality or favored businesses.
+
+Cluster 10: This cluster might refer to some sort of outdoor or nature-themed places or experiences, with words like 'ridges', 'stones', 'rabbits', 'feathers', 'rumbling'.
+
+Cluster 11: This cluster could relate to social events or group activities, with words like 'gatherings', 'parties', 'impromptu', 'clapped' suggesting social interactions and experiences.
+
+Cluster 12: This cluster appears to contain a mix of specific names and descriptive terms, suggesting it could involve diverse topics or unique reviews.
+
+Cluster 13: This cluster seems to include a list of names, which could indicate reviews discussing specific individuals or possibly referring to employee names at businesses.
+
+Cluster 14: This cluster might involve specific incidents or issues in service, with words like 'agitation', 'persisted', 'unnecessary', 'interruption' suggesting negative reviews or complaints.
+
+Cluster 15: This cluster could be related to entertainment or music venues, with words like 'venues', 'gigs', 'confines', 'songs' suggesting music-related reviews or experiences.
+
+Cluster 16: This cluster's specific theme is hard to determine due to a mixture of partial words and complete words, possibly indicating a range of topics discussed in reviews.
+
+Cluster 17: This cluster seems to involve entertainment and beverages, with words like 'netflix', 'brewers', 'brewery', 'tequila', suggesting reviews about breweries or entertainment venues.
+
+Cluster 18: This cluster likely involves customer service and feedback, with words like 'apologize', 'apologies', 'feedback', 'warnings' indicating interactions and communication.
+
+Cluster 19: This cluster seems to revolve around employment or staff at businesses, with words like 'chief', 'hired', 'officer', 'job', 'hire' indicating discussions about staff or hiring practices.
+
+Cluster 20: This cluster might refer to specific experiences or thematic elements of businesses, with words like 'vortex', 'trooper', 'godzilla', suggesting unique or themed experiences described in reviews.
