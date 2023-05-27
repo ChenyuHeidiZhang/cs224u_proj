@@ -1,3 +1,6 @@
 NUM_LAYERS = 13
 BATCH_SIZE = 64
 HIDDEN_DIM = 768
+CLUSTER_OUTPUT_DIR = 'cluster_outputs'
+VISUALIZATION_DIR = 'visualizations'
+NEURON_REPR_DIR = 'neuron_repr'

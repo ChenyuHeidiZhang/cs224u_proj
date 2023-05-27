@@ -9,7 +9,7 @@ def load_neuron_repr():
     print('Loading neuron representations')
     neuron_representations_avg = {}
     for i in range(NUM_LAYERS):
-        with open('neuron_repr/neuron_repr_{}.json'.format(i), 'r') as f:
+        with open(f'{NEURON_REPR_DIR}/neuron_repr_{i}.json', 'r') as f:
             neuron_representations_avg[i] = torch.tensor(json.load(f)).t()  # shape (vocab_size, num_neurons) -> (num_neurons, vocab_size); num_neurons is hidden_dim
 
     # concatenate all layers
@@ -17,7 +17,7 @@ def load_neuron_repr():
     return all_layer_repr
 
 def save_cluster(cluster_labels, num_clusters, distance_threshold):
-    dir = f'cluster_outputs/n_clusters{num_clusters}_distance_threshold_{distance_threshold}/'
+    dir = f'{CLUSTER_OUTPUT_DIR}/n_clusters{num_clusters}_distance_threshold_{distance_threshold}/'
     if not os.path.exists(dir):
         os.makedirs(dir)
     clusters = {}
@@ -29,7 +29,7 @@ def save_cluster(cluster_labels, num_clusters, distance_threshold):
         json.dump(clusters, f)
 
 def load_cluster(num_clusters, distance_threshold):
-    dir = f'cluster_outputs/n_clusters{num_clusters}_distance_threshold_{distance_threshold}/'
+    dir = f'{CLUSTER_OUTPUT_DIR}/n_clusters{num_clusters}_distance_threshold_{distance_threshold}/'
     with open(os.path.join(dir, 'cluster_id_to_neurons.json'), 'r') as f:
         clusters = json.load(f)
     return clusters

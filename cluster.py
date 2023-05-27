@@ -9,7 +9,7 @@ from sklearn.cluster import AgglomerativeClustering
 from transformers import AutoTokenizer, BertModel, BertConfig
 from datasets import load_dataset
 
-from constants import NUM_LAYERS, BATCH_SIZE, HIDDEN_DIM
+from constants import *
 from utils import load_neuron_repr, save_cluster, load_cluster
 from visualization import visualize_cluster_layer_neuron_count, visualize_cluster_scatter_plot, plot_cluster_top_tokens_neuron, plot_cluster_neurons
 
@@ -39,7 +39,7 @@ def explore_cluster_distance_thresholds(dissimilarity, thresholds):
         print(f"Threshold: {threshold}, Number of clusters: {cluster_size}")
 
 def get_cluster_top_tokens(all_layer_repr, tokenizer, cluster_labels, num_clusters, distance_threshold, num_top_tokens):
-    dir = f'cluster_outputs/n_clusters{num_clusters}_distance_threshold_{distance_threshold}/'
+    dir = f'{CLUSTER_OUTPUT_DIR}/n_clusters{num_clusters}_distance_threshold_{distance_threshold}/'
     if not os.path.exists(dir):
         os.makedirs(dir)
     cluster_id_to_top_token_indices = {}

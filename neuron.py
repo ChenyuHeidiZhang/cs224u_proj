@@ -4,7 +4,7 @@ import json
 from transformers import AutoTokenizer, BertModel, BertConfig
 from datasets import load_dataset
 
-from constant import BATCH_SIZE, NUM_LAYERS
+from constant import *
 
 def get_neuron_representations(model, tokenizer, config, dataset, device):
     neuron_representations_sum = {}
@@ -44,7 +44,7 @@ def get_neuron_representations(model, tokenizer, config, dataset, device):
     # save neuron representations to file
     for i in range(config.num_hidden_layers+1):
         neuron_representations_avg[i] = neuron_representations_avg[i].cpu().tolist()
-        with open('neuron_repr/neuron_repr_{}.json'.format(i), 'w') as f:
+        with open(f'{NEURON_REPR_DIR}/neuron_repr_{i}.json', 'w') as f:
             json.dump(neuron_representations_avg[i], f)
 
     print('non-zero tokens count: ', torch.nonzero(tokens_count).shape)

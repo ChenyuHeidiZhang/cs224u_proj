@@ -7,7 +7,7 @@ from constants import *
 
 
 def visualize_cluster_layer_neuron_count(cluster_id, num_clusters, distance_threshold, num_neurons_per_layer):
-    dir = f"visualizations/n_clusters{num_clusters}_distance_threshold_{distance_threshold}/cluster_neuron_count"
+    dir = f"{VISUALIZATION_DIR}/n_clusters{num_clusters}_distance_threshold_{distance_threshold}/cluster_neuron_count"
     if not os.path.exists(dir):
         os.makedirs(dir)
     plt.figure(figsize=(20, 10))
@@ -18,7 +18,7 @@ def visualize_cluster_layer_neuron_count(cluster_id, num_clusters, distance_thre
     plt.savefig(os.path.join(dir, f"cluster_{cluster_id}.png"))
 
 def visualize_cluster_scatter_plot(cluster_id, num_clusters, distance_threshold, layer_indices, neuron_indices):
-    dir = f"visualizations/n_clusters{num_clusters}_distance_threshold_{distance_threshold}/cluster_scatter_plot"
+    dir = f"{VISUALIZATION_DIR}/n_clusters{num_clusters}_distance_threshold_{distance_threshold}/cluster_scatter_plot"
     if not os.path.exists(dir):
         os.makedirs(dir)
     plt.figure(figsize=(20, 10))
@@ -47,7 +47,7 @@ def plot_cluster_neurons(cluster_labels, num_clusters, distance_threshold):
         visualize_cluster_scatter_plot(cluster_id, num_clusters, distance_threshold, layer_indices, neuron_indices)
 
 def plot_cluster_top_tokens_neuron(cluster_id_to_top_token_indices, all_layer_repr, cluster_labels, num_clusters, distance_threshold, num_top_tokens):
-    dir = f"visualizations/n_clusters{num_clusters}_distance_threshold_{distance_threshold}/cluster_top_tokens"
+    dir = f"{VISUALIZATION_DIR}/n_clusters{num_clusters}_distance_threshold_{distance_threshold}/cluster_top_tokens"
     if not os.path.exists(dir):
         os.makedirs(dir)
     # visualize a max of 50 clusters
