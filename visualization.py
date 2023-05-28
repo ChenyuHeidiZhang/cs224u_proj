@@ -1,8 +1,14 @@
 import os
 import json
+from tqdm import tqdm
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
+
+import fasttext.util
+from sklearn.manifold import TSNE
+from sklearn.decomposition import PCA
+
 from constants import *
 from cluster import find_dissimilarity_matrix
 
@@ -83,4 +89,50 @@ def plot_cluster_top_tokens_neuron(cluster_id_to_top_token_indices, all_layer_re
         plt.title(f'Cluster {cluster_id} top {num_top_tokens} tokens')
         plt.imshow(neurons_all_tokens, cmap='hot', interpolation='nearest')
         plt.savefig(os.path.join(dir, f"cluster_{cluster_id}_top_{num_top_tokens}_tokens.png"))
+
+
+def visualize_cluster_token_embeddings(folder_name):
+    # Load a FastText model
+    # Note: You can download a pre-trained FastText model from https://dl.fbaipublicfiles.com/fasttext/vectors-crawl/
+    fasttext.util.download_model('en', if_exists='ignore')  # English
+    print("Loading FastText model...")
+    ft = fasttext.load_model('cc.en.300.bin')
+
+    plt.figure(figsize=(10, 10))
+
+    tokens_file = os.path.join(CLUSTER_OUTPUT_DIR, folder_name, "top_10_tokens.txt")
+    cluster_ids = []
+    embeddings_all = []
+    print('Computing embeddings...')
+    with open(tokens_file, 'r') as f:
+        for id, line in tqdm(enumerate(f)):
+            # if id > 5: break
+            tokens = line.split(': [')[-1].split('\']')[0].split(', ')
+            tokens = [token.strip("'") for token in tokens]
+            cluster_ids.extend([id] * len(tokens))
+            # print(tokens)
+            embeddings = np.array([ft.get_word_vector(token) for token in tokens])
+            embeddings_all.append(embeddings)
+    embeddings_all = np.concatenate(embeddings_all, axis=0)
+    tsne = TSNE(n_components=2)
+    embeddings_2d = tsne.fit_transform(embeddings_all)
+    # pca = PCA(n_components=2)
+    # embeddings_2d = pca.fit_transform(embeddings_all)
+
+    # print(embeddings_2d.shape)  # (num_tokens, 2)
+
+    print('Plotting...')
+    color_map = plt.cm.get_cmap('tab20', max(cluster_ids)+1)
+    xs, ys = [], []
+    for i, emb in enumerate(embeddings_2d):
+        x, y = embeddings_2d[i, :]
+        xs.append(x)
+        ys.append(y)
+        if i+1 >= len(cluster_ids) or cluster_ids[i] != cluster_ids[i+1]:
+            plt.scatter(xs, ys, color=color_map(cluster_ids[i]), label=f'cluster_id {cluster_ids[i]}')
+            xs, ys = [], []
+        # plt.annotate(token, xy=(x, y), xytext=(5, 2), textcoords='offset points', ha='right', va='bottom')
+    plt.legend()
+    plt.savefig(os.path.join(VISUALIZATION_DIR, folder_name, "cluster_token_embeddings.png"))
+
 

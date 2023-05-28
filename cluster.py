@@ -143,5 +143,7 @@ def run():
 
 
 if __name__ == '__main__':
-    run()
+    # run()
     # evaluate_cluster(num_clusters=20, distance_threshold=None)
+
+    visualize_cluster_token_embeddings(folder_name="n_clusters20_distance_threshold_None")

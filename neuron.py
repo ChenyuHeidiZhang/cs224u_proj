@@ -4,7 +4,7 @@ import json
 from transformers import AutoTokenizer, BertModel, BertConfig
 from datasets import load_dataset
 
-from constant import *
+from constants import *
 
 def get_neuron_representations(model, tokenizer, config, dataset, device):
     neuron_representations_sum = {}
