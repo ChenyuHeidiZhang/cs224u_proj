@@ -92,6 +92,7 @@ def plot_cluster_top_tokens_neuron(cluster_id_to_top_token_indices, all_layer_re
 
 
 def visualize_cluster_token_embeddings(folder_name, max_clusters_to_plot=5):
+    # TODO: plot the clusters that are closest to the center of the cluster
     # Load a FastText model
     # Note: You can download a pre-trained FastText model from https://dl.fbaipublicfiles.com/fasttext/vectors-crawl/
     fasttext.util.download_model('en', if_exists='ignore')  # English
@@ -100,42 +101,54 @@ def visualize_cluster_token_embeddings(folder_name, max_clusters_to_plot=5):
 
     plt.figure(figsize=(10, 10))
 
-    tokens_file = os.path.join(CLUSTER_OUTPUT_DIR, folder_name, "top_10_tokens.txt")
+    num_tokens_per_cluster = 10
+    tokens_file = os.path.join(CLUSTER_OUTPUT_DIR, folder_name, f"top_{num_tokens_per_cluster}_tokens.txt")
     all_tokens = []
-    cluster_ids = []
     embeddings_all = []
+    distances_per_cluster = []
     print('Computing embeddings...')
     with open(tokens_file, 'r') as f:
         for id, line in tqdm(enumerate(f)):
-            if id > max_clusters_to_plot: break
+            # if id > max_clusters_to_plot: break
             tokens = line.split(': [')[-1].split('\']')[0].split(', ')
             tokens = [token.strip("'") for token in tokens]
-            all_tokens.extend(tokens)
-            cluster_ids.extend([id] * len(tokens))
-            # print(tokens)
+            all_tokens.append(tokens)
             embeddings = np.array([ft.get_word_vector(token) for token in tokens])
+            center_embedding = np.mean(embeddings, axis=0)
+            # compute the distance of each token embedding to the center embedding
+            distances = np.linalg.norm(embeddings - center_embedding, axis=1)
+            # accumulate average distance of each cluster
+            distances_per_cluster.append(np.mean(distances))
             embeddings_all.append(embeddings)
-    embeddings_all = np.concatenate(embeddings_all, axis=0)
-    tsne = TSNE(n_components=2)
-    embeddings_2d = tsne.fit_transform(embeddings_all)
-    # pca = PCA(n_components=2)
-    # embeddings_2d = pca.fit_transform(embeddings_all)
+
+    # sort the clusters by average distance
+    sorted_cluster_ids = np.argsort(distances_per_cluster)  # (num_clusters, )
+    # sorted_cluster_ids = np.arange(len(all_tokens))
+    # concate embeddings of clusters with the smallest average distance
+    embeddings_all = np.concatenate([embeddings_all[i] for i in sorted_cluster_ids[:max_clusters_to_plot]], axis=0)
+    # embeddings_all = np.concatenate(embeddings_all, axis=0)
+
+    # tsne = TSNE(n_components=2)
+    # embeddings_2d = tsne.fit_transform(embeddings_all)
+    pca = PCA(n_components=2)
+    embeddings_2d = pca.fit_transform(embeddings_all)
 
     # print(embeddings_2d.shape)  # (num_tokens, 2)
 
     print('Plotting...')
     mapname = 'rainbow' if max_clusters_to_plot < 10 else 'tab20'
-    color_map = plt.cm.get_cmap(mapname, max(cluster_ids)+1)
-    xs, ys = [], []
-    for i, token in enumerate(all_tokens):
-        x, y = embeddings_2d[i, :]
-        xs.append(x)
-        ys.append(y)
-        if i+1 >= len(cluster_ids) or cluster_ids[i] != cluster_ids[i+1]:
-            plt.scatter(xs, ys, color=color_map(cluster_ids[i]), label=f'cluster_id {cluster_ids[i]}')
-            xs, ys = [], []
+    color_map = plt.cm.get_cmap(mapname, max_clusters_to_plot)
+    for i, cluster_id in enumerate(sorted_cluster_ids[:max_clusters_to_plot]):
+        start_idx = i * num_tokens_per_cluster
+        xys = embeddings_2d[start_idx:start_idx+num_tokens_per_cluster, :]
+        xs, ys = xys[:, 0], xys[:, 1]
+        # print(xs, ys)
+        plt.scatter(xs, ys, color=color_map(i), label=f'cluster_id {cluster_id}')
         if max_clusters_to_plot < 5:
-            plt.annotate(token, xy=(x, y), xytext=(5, 2), textcoords='offset points', ha='right', va='bottom')
+            for j in range(num_tokens_per_cluster):
+                x, y = xs[j], ys[j]
+                token = all_tokens[cluster_id][j]
+                plt.annotate(token, xy=(x, y), xytext=(5, 2), textcoords='offset points', ha='right', va='bottom')
     plt.legend()
     plt.savefig(os.path.join(VISUALIZATION_DIR, folder_name, f"cluster_token_embeddings_{max_clusters_to_plot}.png"))
 
