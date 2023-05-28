@@ -91,7 +91,7 @@ def plot_cluster_top_tokens_neuron(cluster_id_to_top_token_indices, all_layer_re
         plt.savefig(os.path.join(dir, f"cluster_{cluster_id}_top_{num_top_tokens}_tokens.png"))
 
 
-def visualize_cluster_token_embeddings(folder_name):
+def visualize_cluster_token_embeddings(folder_name, max_clusters_to_plot=5):
     # Load a FastText model
     # Note: You can download a pre-trained FastText model from https://dl.fbaipublicfiles.com/fasttext/vectors-crawl/
     fasttext.util.download_model('en', if_exists='ignore')  # English
@@ -101,14 +101,16 @@ def visualize_cluster_token_embeddings(folder_name):
     plt.figure(figsize=(10, 10))
 
     tokens_file = os.path.join(CLUSTER_OUTPUT_DIR, folder_name, "top_10_tokens.txt")
+    all_tokens = []
     cluster_ids = []
     embeddings_all = []
     print('Computing embeddings...')
     with open(tokens_file, 'r') as f:
         for id, line in tqdm(enumerate(f)):
-            # if id > 5: break
+            if id > max_clusters_to_plot: break
             tokens = line.split(': [')[-1].split('\']')[0].split(', ')
             tokens = [token.strip("'") for token in tokens]
+            all_tokens.extend(tokens)
             cluster_ids.extend([id] * len(tokens))
             # print(tokens)
             embeddings = np.array([ft.get_word_vector(token) for token in tokens])
@@ -122,17 +124,19 @@ def visualize_cluster_token_embeddings(folder_name):
     # print(embeddings_2d.shape)  # (num_tokens, 2)
 
     print('Plotting...')
-    color_map = plt.cm.get_cmap('tab20', max(cluster_ids)+1)
+    mapname = 'rainbow' if max_clusters_to_plot < 10 else 'tab20'
+    color_map = plt.cm.get_cmap(mapname, max(cluster_ids)+1)
     xs, ys = [], []
-    for i, emb in enumerate(embeddings_2d):
+    for i, token in enumerate(all_tokens):
         x, y = embeddings_2d[i, :]
         xs.append(x)
         ys.append(y)
         if i+1 >= len(cluster_ids) or cluster_ids[i] != cluster_ids[i+1]:
             plt.scatter(xs, ys, color=color_map(cluster_ids[i]), label=f'cluster_id {cluster_ids[i]}')
             xs, ys = [], []
-        # plt.annotate(token, xy=(x, y), xytext=(5, 2), textcoords='offset points', ha='right', va='bottom')
+        if max_clusters_to_plot < 5:
+            plt.annotate(token, xy=(x, y), xytext=(5, 2), textcoords='offset points', ha='right', va='bottom')
     plt.legend()
-    plt.savefig(os.path.join(VISUALIZATION_DIR, folder_name, "cluster_token_embeddings.png"))
+    plt.savefig(os.path.join(VISUALIZATION_DIR, folder_name, f"cluster_token_embeddings_{max_clusters_to_plot}.png"))
 
 
