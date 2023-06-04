@@ -83,7 +83,7 @@ def main():
     # HIDDEN_SIZE = config.hidden_size
     print('VOCAB_SIZE:', config.vocab_size, 'MAX_LENGTH:', config.max_position_embeddings, 'NUM_HIDDEN_LAYERS:', config.num_hidden_layers, 'HIDDEN_SIZE:', config.hidden_size)
 
-    dataset = load_dataset_from_hf(dev=False)
+    dataset = load_dataset_from_hf(dev=(DATASET=='yelp'))
     print("Dataset loaded")
 
     print("Start computing neuron representations")

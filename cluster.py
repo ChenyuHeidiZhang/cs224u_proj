@@ -103,7 +103,7 @@ def evaluate_cluster(num_clusters=3, distance_threshold=None):
     print("Model loaded")
 
     # load data
-    dataset = load_dataset_from_hf(dev=False)
+    dataset = load_dataset_from_hf(dev=(DATASET=='yelp'))
 
     # for each cluster, for neurons in that cluster, manually set the activation to 0
     for cluster_id in range(num_clusters):
