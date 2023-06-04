@@ -92,7 +92,6 @@ def plot_cluster_top_tokens_neuron(cluster_id_to_top_token_indices, all_layer_re
 
 
 def visualize_cluster_token_embeddings(folder_name, max_clusters_to_plot=5):
-    # TODO: plot the clusters that are closest to the center of the cluster
     # Load a FastText model
     # Note: You can download a pre-trained FastText model from https://dl.fbaipublicfiles.com/fasttext/vectors-crawl/
     fasttext.util.download_model('en', if_exists='ignore')  # English

@@ -7,8 +7,8 @@ from collections import defaultdict
 import torch
 from sklearn.cluster import AgglomerativeClustering
 from transformers import AutoTokenizer, BertModel, BertConfig
-from datasets import load_dataset
 
+from neuron import load_dataset_from_hf
 from constants import *
 from utils import load_neuron_repr, save_cluster, load_cluster
 from visualization import *
@@ -74,20 +74,21 @@ def compute_clusters(all_layer_repr, tokenizer, num_clusters=3, distance_thresho
 
     # Save the cluster labels
     save_cluster(cluster_labels, num_clusters, distance_threshold)
-
-    # Print the cluster labels
-    print(cluster_labels)
+    # print(cluster_labels)
 
     # Find top-k tokens that are activated by neurons in the same cluster and write to a file
     cluster_id_to_top_token_indices = get_cluster_top_tokens(all_layer_repr, tokenizer, cluster_labels, num_clusters, distance_threshold, num_top_tokens)
 
-    # plot the neurons with their cluster labels
+    # plot the positions (layer and index) of neurons for each cluster label
     plot_cluster_neurons(cluster_labels, num_clusters, distance_threshold)
-    
+
+    # TODO: this should really be done across clusters, not within clusters, to show that the clusters are well-separated
     # plot the top tokens for each cluster with their representations
-    plot_cluster_top_tokens_neuron(cluster_id_to_top_token_indices, all_layer_repr, cluster_labels, num_clusters, distance_threshold, num_top_tokens)
-    
+    # plot_cluster_top_tokens_neuron(cluster_id_to_top_token_indices, all_layer_repr, cluster_labels, num_clusters, distance_threshold, num_top_tokens)
+
+
 def evaluate_cluster(num_clusters=3, distance_threshold=None):
+    '''Evaluate cluster using causal ablation.'''
     # load cluster
     clusters = load_cluster(num_clusters=num_clusters, distance_threshold=distance_threshold)
     print("Cluster loaded")
@@ -102,9 +103,7 @@ def evaluate_cluster(num_clusters=3, distance_threshold=None):
     print("Model loaded")
 
     # load data
-    yelp = load_dataset("yelp_review_full")
-    dataset = yelp["test"]["text"][:10000] # for development purpose, only use the first 10000 examples in yelp["test"]["text"]
-    print("Dataset loaded")
+    dataset = load_dataset_from_hf(dev=False)
 
     # for each cluster, for neurons in that cluster, manually set the activation to 0
     for cluster_id in range(num_clusters):
@@ -128,7 +127,7 @@ def evaluate_cluster(num_clusters=3, distance_threshold=None):
                     # hidden_states has shape (batch_size, sequence_length, hidden_size)
                     # for each neuron in the layer, set the activation to 0
                     hidden_states[:, :, layer_indices[layer_id]] = 0
-                
+
     # TODO: compute the accuracy of the model on the dataset with and without the cluster
 
 
@@ -146,4 +145,4 @@ if __name__ == '__main__':
     # run()
     # evaluate_cluster(num_clusters=20, distance_threshold=None)
 
-    visualize_cluster_token_embeddings(folder_name="n_clusters20_distance_threshold_None")
+    visualize_cluster_token_embeddings(folder_name="n_clusters50_distance_threshold_None")

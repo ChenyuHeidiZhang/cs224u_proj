@@ -1,6 +1,7 @@
 NUM_LAYERS = 13
 BATCH_SIZE = 64
 HIDDEN_DIM = 768
-CLUSTER_OUTPUT_DIR = 'cluster_outputs'
-VISUALIZATION_DIR = 'visualizations'
-NEURON_REPR_DIR = 'neuron_repr'
+DATASET = "c4"
+CLUSTER_OUTPUT_DIR = f'{DATASET}/cluster_outputs'
+VISUALIZATION_DIR = f'{DATASET}/visualizations'
+NEURON_REPR_DIR = f'{DATASET}/neuron_repr'

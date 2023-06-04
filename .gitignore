@@ -1,4 +1,4 @@
 __pycache__
-neuron_repr/
+*neuron_repr/
 tokenizer_info/
 cc.en.300.bin*

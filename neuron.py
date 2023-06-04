@@ -1,3 +1,4 @@
+import os
 import torch
 from tqdm import tqdm
 import json
@@ -42,6 +43,8 @@ def get_neuron_representations(model, tokenizer, config, dataset, device):
         neuron_representations_avg[i] = neuron_representations_sum[i] / torch.clamp(tokens_count.unsqueeze(1), min=1) # avoid division by zero error
 
     # save neuron representations to file
+    if not os.path.exists(NEURON_REPR_DIR):
+        os.makedirs(NEURON_REPR_DIR)
     for i in range(config.num_hidden_layers+1):
         neuron_representations_avg[i] = neuron_representations_avg[i].cpu().tolist()
         with open(f'{NEURON_REPR_DIR}/neuron_repr_{i}.json', 'w') as f:
@@ -50,6 +53,20 @@ def get_neuron_representations(model, tokenizer, config, dataset, device):
     print('non-zero tokens count: ', torch.nonzero(tokens_count).shape)
 
     return neuron_representations_avg
+
+
+def load_dataset_from_hf(dev=False):
+    if dev:
+        yelp = load_dataset("yelp_review_full")
+        dataset = yelp["test"]["text"][:10000] # for development purpose, only use the first 10000 examples in yelp["test"]["text"]
+    else:
+        data_files = {"validation": "en/c4-validation.*.json.gz"}
+        dataset = load_dataset("allenai/c4", data_files=data_files, split="validation")
+        # dataset = load_dataset("c4", "en", split="validation")
+        dataset = dataset["text"][:10000]  # TODO: use all data
+    print("Dataset loaded")
+    return dataset
+
 
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -66,8 +83,7 @@ def main():
     # HIDDEN_SIZE = config.hidden_size
     print('VOCAB_SIZE:', config.vocab_size, 'MAX_LENGTH:', config.max_position_embeddings, 'NUM_HIDDEN_LAYERS:', config.num_hidden_layers, 'HIDDEN_SIZE:', config.hidden_size)
 
-    yelp = load_dataset("yelp_review_full")
-    dataset = yelp["test"]["text"][:10000] # for development purpose, only use the first 10000 examples in yelp["test"]["text"]
+    dataset = load_dataset_from_hf(dev=False)
     print("Dataset loaded")
 
     print("Start computing neuron representations")
