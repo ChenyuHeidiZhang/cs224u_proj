@@ -3,6 +3,7 @@ import torch
 import json
 import os
 import numpy as np
+import random
 
 
 def load_neuron_repr():
@@ -33,3 +34,27 @@ def load_cluster(num_clusters, distance_threshold):
     with open(os.path.join(dir, 'cluster_id_to_neurons.json'), 'r') as f:
         clusters = json.load(f)
     return clusters
+
+# select sentences with given keywords from the corpus
+def select_sentences(corpus, keywords, size=100):
+    sentences = []
+    for sentence in corpus:
+        for keyword in keywords:
+            if keyword in sentence:
+                sentences.append(sentence)
+                break
+    if len(sentences) < size:
+        print(f"Warning: the corpus is too small to sample {size} sentences")
+    sentences = random.sample(sentences, min(size, len(sentences)))
+    return sentences
+
+def read_top_activating_tokens(filename):
+    cluster_to_tokens = {}
+    with open(filename, "r") as f:
+        lines = f.readlines()
+    for line in lines:
+        cluster_id, tokens = line.split(":")
+        cluster_id = cluster_id.strip().split(" ")[1]
+        tokens = tokens.strip().replace("[", "").replace("]", "").replace("'", "").split(",")
+        cluster_to_tokens[cluster_id] = tokens
+    return cluster_to_tokens
