@@ -35,8 +35,7 @@ def load_cluster(num_clusters, distance_threshold):
         clusters = json.load(f)
     return clusters
 
-# select sentences with given keywords from the corpus
-def select_sentences(corpus, keywords, size=100):
+def select_sentences_with_tokens(corpus, keywords, size=100):
     sentences = []
     for sentence in corpus:
         for keyword in keywords:

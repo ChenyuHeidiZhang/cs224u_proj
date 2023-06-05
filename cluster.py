@@ -5,8 +5,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from collections import defaultdict
 import torch
+from torch.nn import CrossEntropyLoss
 from sklearn.cluster import AgglomerativeClustering
-from transformers import AutoTokenizer, BertModel, BertConfig
+from transformers import AutoTokenizer, BertModel, BertConfig, BertForPreTraining
 
 from neuron import load_dataset_from_hf
 from constants import *
@@ -99,11 +100,14 @@ def evaluate_cluster(num_clusters=3, distance_threshold=None):
     tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
     tokenizer.save_pretrained('tokenizer_info')
     config = BertConfig.from_pretrained("bert-base-uncased", output_hidden_states=True)
-    model = BertModel.from_pretrained("bert-base-uncased", config=config).to(device)
+    model = BertForPreTraining.from_pretrained("bert-base-uncased", config=config).to(device)
     print("Model loaded")
 
     # load data
     dataset = load_dataset_from_hf(dev=(DATASET=='yelp'))
+
+    # define loss function
+    loss_fct = CrossEntropyLoss() # MLM
 
     # for each cluster, for neurons in that cluster, manually set the activation to 0
     for cluster_id in range(num_clusters):
@@ -118,15 +122,29 @@ def evaluate_cluster(num_clusters=3, distance_threshold=None):
                 batch = dataset[start_index: start_index+BATCH_SIZE]
                 temp = tokenizer.batch_encode_plus(
                     batch, add_special_tokens=True, padding=True, truncation=True, max_length=config.max_position_embeddings, return_tensors='pt', return_attention_mask=True)
-                input_ids, attention_mask = temp["input_ids"].to(device), temp["attention_mask"].to(device)
+                input_ids, attention_mask = temp["input_ids"].to(device), temp["attention_mask"].to(device) # shape: (batch_size, seq_len)
+                labels = input_ids.clone()
+                # randomly mask 15% of the input tokens to be [MASK]
+                masked_indices = torch.bernoulli(torch.full(input_ids.size(), 0.15)).bool().to(device)
+                input_ids[masked_indices] = tokenizer.mask_token_id
+                # confirm that input_ids is different from labels
+                assert not torch.equal(input_ids, labels)
                 extended_attention_mask = model.get_extended_attention_mask(attention_mask, input_ids.size()).to(device)
-                hidden_states= model.embeddings(input_ids=input_ids)
-                hidden_states[:, :, layer_indices[0]] = 0
+                hidden_states= model.bert.embeddings(input_ids=input_ids)
+                hidden_states[:, :, layer_indices[0]] = 0 # set the activation of neurons in the embedding layer to 0
                 for layer_id in range(1, NUM_LAYERS):
-                    hidden_states = model.encoder.layer[layer_id](hidden_states, attention_mask=extended_attention_mask)[0]
+                    hidden_states = model.bert.encoder.layer[layer_id - 1](hidden_states, attention_mask=extended_attention_mask)[0]
                     # hidden_states has shape (batch_size, sequence_length, hidden_size)
                     # for each neuron in the layer, set the activation to 0
                     hidden_states[:, :, layer_indices[layer_id]] = 0
+                sequence_output = hidden_states # shape: (batch_size, seq_len, hidden_size)
+                pooled_output = model.bert.pooler(hidden_states) # shape: (batch_size, hidden_size)
+                prediction_scores, _ = model.cls(sequence_output, pooled_output) # shape: (batch_size, sequence_length, vocab_size)
+
+                # compute MLM loss
+                masked_lm_loss = loss_fct(prediction_scores.view(-1, config.vocab_size), labels.view(-1))
+                # print("masked_lm_loss", masked_lm_loss)
+                # return prediction_scores
 
     # TODO: compute the accuracy of the model on the dataset with and without the cluster
 
@@ -143,6 +161,6 @@ def run():
 
 if __name__ == '__main__':
     # run()
-    # evaluate_cluster(num_clusters=20, distance_threshold=None)
+    evaluate_cluster(num_clusters=50, distance_threshold=None)
 
-    visualize_cluster_token_embeddings(folder_name="n_clusters50_distance_threshold_None")
+    # visualize_cluster_token_embeddings(folder_name="n_clusters50_distance_threshold_None")
