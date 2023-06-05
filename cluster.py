@@ -7,11 +7,11 @@ from collections import defaultdict
 import torch
 from torch.nn import CrossEntropyLoss
 from sklearn.cluster import AgglomerativeClustering
-from transformers import AutoTokenizer, BertModel, BertConfig, BertForPreTraining
+from transformers import AutoTokenizer, BertModel, BertConfig, BertForPreTraining, BertForMaskedLM
 
 from neuron import load_dataset_from_hf
 from constants import *
-from utils import load_neuron_repr, save_cluster, load_cluster
+from utils import load_neuron_repr, save_cluster, load_cluster, read_top_activating_tokens, select_sentences_with_tokens
 from visualization import *
 
 
@@ -71,10 +71,12 @@ def compute_clusters(all_layer_repr, tokenizer, num_clusters=3, distance_thresho
     # plot_cluster_top_tokens_neuron(cluster_id_to_top_token_indices, all_layer_repr, cluster_labels, num_clusters, distance_threshold, num_top_tokens)
 
 
-def evaluate_cluster(num_clusters=3, distance_threshold=None):
+def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_percentage=0.15):
     '''Evaluate cluster using causal ablation.'''
-    # load cluster
-    clusters = load_cluster(num_clusters=num_clusters, distance_threshold=distance_threshold)
+    # load neurons in each cluster
+    cluster_to_neurons = load_cluster(num_clusters=num_clusters, distance_threshold=distance_threshold)
+    # load top activating tokens for each cluster
+    cluster_to_tokens = read_top_activating_tokens(f"{CLUSTER_OUTPUT_DIR}/n_clusters{num_clusters}_distance_threshold_{distance_threshold}/top_10_tokens.txt")
     print("Cluster loaded")
 
     # load model 
@@ -83,36 +85,52 @@ def evaluate_cluster(num_clusters=3, distance_threshold=None):
     tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
     tokenizer.save_pretrained('tokenizer_info')
     config = BertConfig.from_pretrained("bert-base-uncased", output_hidden_states=True)
-    model = BertForPreTraining.from_pretrained("bert-base-uncased", config=config).to(device)
+    model = BertForMaskedLM.from_pretrained("bert-base-uncased", config=config).to(device)
     print("Model loaded")
 
     # load data
     dataset = load_dataset_from_hf(dev=(DATASET=='yelp'))
+    print("Dataset loaded")
 
     # define loss function
     loss_fct = CrossEntropyLoss() # MLM
 
     # for each cluster, for neurons in that cluster, manually set the activation to 0
     for cluster_id in range(num_clusters):
-        neuron_indices = clusters[str(cluster_id)]
+        # get neurons
+        neuron_indices = cluster_to_neurons[str(cluster_id)]
         # group by layer id
         layer_indices = defaultdict(list)
         for neuron_index in neuron_indices:
             layer_id = neuron_index // 768
             layer_indices[layer_id].append(neuron_index % 768)
+        
+        # get tokens & prepare evaluate data
+        tokens = cluster_to_tokens[str(cluster_id)]
+        print("tokens: ", tokens)
+        evaluation_split = select_sentences_with_tokens(dataset, tokens, size=1000)
+
+        average_MLM_loss = 0
         with torch.no_grad():
-            for start_index in tqdm(range(0, len(dataset), BATCH_SIZE)):
+            for start_index in tqdm(range(0, len(evaluation_split), BATCH_SIZE)):
                 batch = dataset[start_index: start_index+BATCH_SIZE]
+
                 temp = tokenizer.batch_encode_plus(
                     batch, add_special_tokens=True, padding=True, truncation=True, max_length=config.max_position_embeddings, return_tensors='pt', return_attention_mask=True)
                 input_ids, attention_mask = temp["input_ids"].to(device), temp["attention_mask"].to(device) # shape: (batch_size, seq_len)
                 labels = input_ids.clone()
+                # set [PAD] tokens to be -100
+                labels[labels == tokenizer.pad_token_id] = -100
                 # randomly mask 15% of the input tokens to be [MASK]
-                masked_indices = torch.bernoulli(torch.full(input_ids.size(), 0.15)).bool().to(device)
+                masked_indices = torch.bernoulli(torch.full(input_ids.size(), mask_percentage)).bool().to(device)
+                # only mask those tokens that are not [PAD], [CLS], or [SEP]
+                masked_indices = masked_indices & (input_ids != tokenizer.pad_token_id) & (input_ids != tokenizer.cls_token_id) & (input_ids != tokenizer.sep_token_id)
                 input_ids[masked_indices] = tokenizer.mask_token_id
                 # confirm that input_ids is different from labels
                 assert not torch.equal(input_ids, labels)
+
                 extended_attention_mask = model.get_extended_attention_mask(attention_mask, input_ids.size()).to(device)
+                
                 hidden_states= model.bert.embeddings(input_ids=input_ids)
                 hidden_states[:, :, layer_indices[0]] = 0 # set the activation of neurons in the embedding layer to 0
                 for layer_id in range(1, NUM_LAYERS):
@@ -121,13 +139,13 @@ def evaluate_cluster(num_clusters=3, distance_threshold=None):
                     # for each neuron in the layer, set the activation to 0
                     hidden_states[:, :, layer_indices[layer_id]] = 0
                 sequence_output = hidden_states # shape: (batch_size, seq_len, hidden_size)
-                pooled_output = model.bert.pooler(hidden_states) # shape: (batch_size, hidden_size)
-                prediction_scores, _ = model.cls(sequence_output, pooled_output) # shape: (batch_size, sequence_length, vocab_size)
-
+                prediction_scores = model.cls(sequence_output) # shape: (batch_size, sequence_length, vocab_size)
                 # compute MLM loss
                 masked_lm_loss = loss_fct(prediction_scores.view(-1, config.vocab_size), labels.view(-1))
-                # print("masked_lm_loss", masked_lm_loss)
-                # return prediction_scores
+                average_MLM_loss += masked_lm_loss.item()
+        average_MLM_loss /= len(evaluation_split) / BATCH_SIZE
+        print(f"Cluster {cluster_id} average MLM loss: {average_MLM_loss}")
+        # return
 
     # TODO: compute the accuracy of the model on the dataset with and without the cluster
 

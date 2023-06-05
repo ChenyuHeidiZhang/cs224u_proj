@@ -36,6 +36,7 @@ def load_cluster(num_clusters, distance_threshold):
     return clusters
 
 def select_sentences_with_tokens(corpus, keywords, size=100):
+    # TODO: should use token id, instead of word
     sentences = []
     for sentence in corpus:
         for keyword in keywords:
@@ -55,5 +56,5 @@ def read_top_activating_tokens(filename):
         cluster_id, tokens = line.split(":")
         cluster_id = cluster_id.strip().split(" ")[1]
         tokens = tokens.strip().replace("[", "").replace("]", "").replace("'", "").split(",")
-        cluster_to_tokens[cluster_id] = tokens
+        cluster_to_tokens[cluster_id] = [token.strip() for token in tokens]
     return cluster_to_tokens
