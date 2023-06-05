@@ -71,8 +71,18 @@ def compute_clusters(all_layer_repr, tokenizer, num_clusters=3, distance_thresho
     # plot_cluster_top_tokens_neuron(cluster_id_to_top_token_indices, all_layer_repr, cluster_labels, num_clusters, distance_threshold, num_top_tokens)
 
 
-def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_percentage=0.15, mask_strategy="top", turn_off_cluster=True):
-    '''Evaluate cluster using causal ablation.'''
+def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top", mask_percentage=0.15, turn_off_cluster=True):
+    '''
+    Evaluate cluster using causal ablation.
+    For each cluster, for each neuron in that cluster, manually set the activation to 0, and compute the MLM loss.
+
+    Args:
+        num_clusters: number of clusters, should be None if distance_threshold is not None
+        distance_threshold: distance threshold for AgglomerativeClustering, should be None if num_clusters is not None
+        mask_strategy: mask "random" or "top"-acivating tokens in sentences
+        mask_percentage: percentage of tokens to be masked if mask_strategy is "random"
+        turn_off_cluster: whether to turn off neurons in the cluster
+    '''
     # load neurons in each cluster
     cluster_to_neurons = load_cluster(num_clusters=num_clusters, distance_threshold=distance_threshold)
     # load top activating tokens for each cluster
@@ -146,6 +156,9 @@ def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_percentage=0.
                     raise ValueError("mask_strategy must be either 'random' or 'top'")
                 # confirm that input_ids is different from labels
                 assert not torch.equal(input_ids, labels)
+                # MLM loss should ignore indices other than the masked indices
+                # set labels to -100 (ignore index) except the masked indices
+                labels[~masked_indices] = -100
 
                 extended_attention_mask = model.get_extended_attention_mask(attention_mask, input_ids.size()).to(device)
                 
@@ -159,7 +172,6 @@ def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_percentage=0.
                 sequence_output = hidden_states # shape: (batch_size, seq_len, hidden_size)
                 prediction_scores = model.cls(sequence_output) # shape: (batch_size, sequence_length, vocab_size)
                 # compute MLM loss
-                # TODO: maybe should only count loss on the masked tokens
                 masked_lm_loss = loss_fct(prediction_scores.view(-1, config.vocab_size), labels.view(-1))
                 average_MLM_loss += masked_lm_loss.item()
         average_MLM_loss /= len(evaluation_split) / BATCH_SIZE

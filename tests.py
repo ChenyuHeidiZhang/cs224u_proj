@@ -49,6 +49,8 @@ def test_layer_by_layer_equal():
     input_ids[masked_indices] = tokenizer.mask_token_id
     # assert input_ids is different from labels
     assert not torch.equal(input_ids, labels)
+    # set labels to -100 (ignore index) except the masked indices
+    labels[~masked_indices] = -100
         
     with torch.no_grad():
         extended_attention_mask = model.get_extended_attention_mask(attention_mask, input_ids.size()).to(device)
