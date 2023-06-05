@@ -56,8 +56,8 @@ def test_layer_by_layer_equal():
         extended_attention_mask = model.get_extended_attention_mask(attention_mask, input_ids.size()).to(device)
         hidden_states= model.bert.embeddings(input_ids=input_ids)
         hidden_states[:, :, []] = 0 # turn none of them off 
-        for layer_id in range(NUM_LAYERS - 1):
-            hidden_states = model.bert.encoder.layer[layer_id](hidden_states, attention_mask=extended_attention_mask)[0]
+        for layer_id in range(1, NUM_LAYERS):
+            hidden_states = model.bert.encoder.layer[layer_id - 1](hidden_states, attention_mask=extended_attention_mask)[0]
             hidden_states[:, :, []] = 0 # turn none of them off 
         layer_by_layer_hidden_states = hidden_states
         sequence_output = hidden_states # shape: (batch_size, seq_len, hidden_size)
@@ -156,10 +156,16 @@ def test_mask_tokens():
     print(input_ids)
     assert input_ids[0, 5] == tokenizer.mask_token_id
     assert input_ids[0, 6] == tokenizer.mask_token_id
-    
+    labels = input_ids.clone()
+    labels[~masked_indices] = -100
+    print(labels)
+    assert labels[0, 5] == tokenizer.mask_token_id
+    assert labels[0, 6] == tokenizer.mask_token_id
+    assert labels[0, 0] == -100
+    assert labels[0, 1] == -100
 
 if __name__ == '__main__':
     # test_compute_clusters()
-    # test_layer_by_layer_equal()
+    test_layer_by_layer_equal()
     # test_turn_off_neurons()
-    test_mask_tokens()
+    # test_mask_tokens()

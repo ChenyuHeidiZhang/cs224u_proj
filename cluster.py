@@ -161,7 +161,7 @@ def model_forward_cluster_turned_off(model, config, input_ids, attention_mask, l
     masked_lm_loss = loss_fct(prediction_scores.view(-1, config.vocab_size), labels.view(-1))
     return masked_lm_loss
 
-def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top", mask_percentage=0.15, num_repeat=5):
+def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top", mask_percentage=0.15, num_repeat=5, evaluation_size=96):
     '''
     Evaluate cluster using causal ablation.
 
@@ -171,6 +171,7 @@ def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top
         mask_strategy: mask "random" or "top"-acivating tokens in sentences
         mask_percentage: percentage of tokens to be masked if mask_strategy is "random"
         num_repeat: number of times to repeat the random baselines
+        evaluation_size: number of sentences to evaluate on per cluster
     '''
     # load neurons in each cluster
     cluster_to_neurons = load_cluster(num_clusters=num_clusters, distance_threshold=distance_threshold)
@@ -209,7 +210,7 @@ def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top
         # get tokens & prepare evaluate data
         top_tokens = cluster_to_tokens[str(cluster_id)]
         print("top activating tokens: ", top_tokens)
-        evaluation_split = select_sentences_with_tokens(dataset, top_tokens, size=96)
+        evaluation_split = select_sentences_with_tokens(dataset, top_tokens, size=evaluation_size)
         if len(evaluation_split) == 0:
             print("Warning: no sentence contains the tokens")
             continue
@@ -224,6 +225,11 @@ def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top
 
                 # prepare inputs and labels
                 input_ids, attention_mask, labels = prepare_inputs_and_labels(batch, top_tokens, tokenizer, config, device, mask_strategy=mask_strategy, mask_percentage=mask_percentage)
+
+                # do not turn off neurons
+                outputs = model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
+                masked_lm_loss = outputs.loss
+                average_MLM_loss += masked_lm_loss.item()
 
                 # turn off neurons in cluster
                 masked_lm_loss_cluster_turned_off = model_forward_cluster_turned_off(model, config, input_ids, attention_mask, labels, layer_indices, device)
@@ -240,11 +246,6 @@ def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top
                     masked_lm_loss_random_layer_dist = model_forward_cluster_turned_off(model, config, input_ids, attention_mask, labels, layer_indices, device, random=True)
                     average_MLM_loss_random_layer_dist_lst[i] += masked_lm_loss_random_layer_dist.item()
                 
-                # do not turn off neurons
-                outputs = model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
-                masked_lm_loss = outputs.loss
-                average_MLM_loss += masked_lm_loss.item()
-
         average_MLM_loss /= len(evaluation_split) / BATCH_SIZE
         average_MLM_loss_cluster_turned_off /= len(evaluation_split) / BATCH_SIZE
         average_MLM_loss_random_lst = [item / (len(evaluation_split) / BATCH_SIZE) for item in average_MLM_loss_random_lst]
@@ -261,11 +262,7 @@ def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top
         print("Cluster {}: nothing_turned_off: {}, cluster_turned_off: {}, random_neuron_turned_off: {}, random_layer_dist_neuron_turned_off: {}".format(cluster_id, average_MLM_loss, average_MLM_loss_cluster_turned_off, average_MLM_loss_random_lst, average_MLM_loss_random_layer_dist_lst))
     
     # save cluster_id_to_average_MLM_loss to file
-    dir = f'{CLUSTER_OUTPUT_DIR}/n_clusters{num_clusters}_distance_threshold_{distance_threshold}/'
-    if not os.path.exists(dir):
-        os.makedirs(dir)
-    with open(os.path.join(dir, 'cluster_id_to_average_MLM_loss.json'), 'w') as f:
-        json.dump(cluster_id_to_average_MLM_loss, f, indent=4)
+    save_cluster_to_MLM_loss(cluster_id_to_average_MLM_loss, num_clusters, distance_threshold)
 
 
 def run():
@@ -280,6 +277,6 @@ def run():
 
 if __name__ == '__main__':
     # run()
-    evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5)
+    evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96)
 
     # visualize_cluster_token_embeddings(folder_name="n_clusters50_distance_threshold_None")
