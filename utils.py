@@ -4,7 +4,7 @@ import json
 import os
 import numpy as np
 import random
-
+from transformers import AutoTokenizer
 
 def load_neuron_repr():
     print('Loading neuron representations')
@@ -35,14 +35,15 @@ def load_cluster(num_clusters, distance_threshold):
         clusters = json.load(f)
     return clusters
 
-def select_sentences_with_tokens(corpus, keywords, size=100):
-    # TODO: should use token id, instead of word
+def select_sentences_with_tokens(corpus, top_tokens, tokenizer=None, size=100):
+    if not tokenizer:
+        tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
     sentences = []
     for sentence in corpus:
-        for keyword in keywords:
-            if keyword in sentence:
+        tokenized_sentence = tokenizer.tokenize(sentence)
+        for top_token in top_tokens:
+            if top_token in tokenized_sentence:
                 sentences.append(sentence)
-                break
     if len(sentences) < size:
         print(f"Warning: the corpus is too small to sample {size} sentences")
     sentences = random.sample(sentences, min(size, len(sentences)))
