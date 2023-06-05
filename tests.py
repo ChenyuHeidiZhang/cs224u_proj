@@ -140,7 +140,26 @@ def test_turn_off_neurons():
             masked_lm_loss_turned_off = loss_fct(prediction_scores.view(-1, config.vocab_size), labels.view(-1))
             print(f"num_neurons_to_turn_off: {num_neurons_to_turn_off} masked_lm_loss_turned_off: {masked_lm_loss_turned_off}" )
 
+def test_mask_tokens():
+    tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+    top_tokens = ["apology", "sorry"]
+    input_ids = torch.zeros((1, 10), dtype=torch.long)
+    token_ids = tokenizer.convert_tokens_to_ids(top_tokens)
+    input_ids[0, 5] = token_ids[0]
+    input_ids[0, 6] = token_ids[1]
+    print(token_ids)
+    print(input_ids)
+    masked_indices = torch.zeros(input_ids.size(), dtype=torch.bool)
+    for token_id in token_ids:
+        masked_indices = masked_indices | (input_ids == token_id)
+    input_ids[masked_indices] = tokenizer.mask_token_id
+    print(input_ids)
+    assert input_ids[0, 5] == tokenizer.mask_token_id
+    assert input_ids[0, 6] == tokenizer.mask_token_id
+    
+
 if __name__ == '__main__':
     # test_compute_clusters()
-    test_layer_by_layer_equal()
-    test_turn_off_neurons()
+    # test_layer_by_layer_equal()
+    # test_turn_off_neurons()
+    test_mask_tokens()

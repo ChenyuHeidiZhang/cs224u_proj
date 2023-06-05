@@ -11,7 +11,7 @@ from transformers import AutoTokenizer, BertModel, BertConfig, BertForPreTrainin
 
 from neuron import load_dataset_from_hf
 from constants import *
-from utils import load_neuron_repr, save_cluster, load_cluster, read_top_activating_tokens, select_sentences_with_tokens
+from utils import *
 from visualization import *
 
 
@@ -71,6 +71,16 @@ def compute_clusters(all_layer_repr, tokenizer, num_clusters=3, distance_thresho
     # plot_cluster_top_tokens_neuron(cluster_id_to_top_token_indices, all_layer_repr, cluster_labels, num_clusters, distance_threshold, num_top_tokens)
 
 def prepare_inputs_and_labels(batch, top_tokens, tokenizer, config, device, mask_strategy="random", mask_percentage=0.15):
+    """
+    Args:
+        batch: list of sentences
+        top_tokens: list of top activating tokens for the cluster
+        tokenizer: AutoTokenizer
+        config: BertConfig
+        device: torch.device
+        mask_strategy: mask "random" or "top"-acivating tokens in sentences
+        mask_percentage: percentage of tokens to be masked if mask_strategy is "random"
+    """
     temp = tokenizer.batch_encode_plus(
                     batch, 
                     add_special_tokens=True,
@@ -111,6 +121,17 @@ def prepare_inputs_and_labels(batch, top_tokens, tokenizer, config, device, mask
     return input_ids, attention_mask, labels
 
 def model_forward_cluster_turned_off(model, config, input_ids, attention_mask, labels, layer_indices, device, random=False):
+    """
+    Args:
+        model: BertForMaskedLM
+        config: BertConfig
+        input_ids: shape (batch_size, seq_len)
+        attention_mask: shape (batch_size, seq_len)
+        labels: shape (batch_size, seq_len)
+        layer_indices: dict, key is layer id, value is a list of neuron indices in that cluster
+        device: torch.device
+        random: whether to randomly turn off neurons in the cluster based on the same layer distribution of that cluster
+    """
     # define MLM loss function
     loss_fct = CrossEntropyLoss() 
 
@@ -175,21 +196,14 @@ def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top
         # get neurons
         neuron_indices = cluster_to_neurons[str(cluster_id)]
 
-        # group by layer id
-        layer_indices = defaultdict(list)
-        for neuron_index in neuron_indices:
-            layer_id = neuron_index // 768
-            layer_indices[layer_id].append(neuron_index % 768) 
+        # group by layer id, get a dictionary mapping layer_id to a list of neuron indices in that layer
+        layer_indices = get_layer_indices(neuron_indices)
         
         # get randomly selected neuron indices, which is in the range of 0 to NUM_LAYERS * HIDDEN_DIM, the total is equal to the number of neurons in the cluster
         num_neurons_to_turn_off = len(neuron_indices)
         random_layer_indices_lst = []
         for _ in range(num_repeat):
-            random_neuron_indices = torch.randperm(NUM_LAYERS * HIDDEN_DIM)[:num_neurons_to_turn_off].tolist()
-            random_layer_indices = defaultdict(list)
-            for neuron_index in random_neuron_indices:
-                layer_id = neuron_index // 768
-                random_layer_indices[layer_id].append(neuron_index % 768)
+            random_neuron_indices = get_random_layer_indices(num_neurons_to_turn_off)
             random_layer_indices_lst.append(random_layer_indices)
         
         # get tokens & prepare evaluate data
