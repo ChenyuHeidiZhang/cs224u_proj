@@ -4,6 +4,7 @@ import json
 import os
 import numpy as np
 import random
+from collections import defaultdict
 from transformers import AutoTokenizer
 
 def load_neuron_repr():
@@ -59,3 +60,27 @@ def read_top_activating_tokens(filename):
         tokens = tokens.strip().replace("[", "").replace("]", "").replace("'", "").split(",")
         cluster_to_tokens[cluster_id] = [token.strip() for token in tokens]
     return cluster_to_tokens
+
+def get_layer_indices(neuron_indices):
+    # given a list of neuron indices, return a dictionary mapping layer_id to a list of neuron indices in that layer
+    layer_indices = defaultdict(list)
+    for neuron_index in neuron_indices:
+        layer_id = neuron_index // 768
+        layer_indices[layer_id].append(neuron_index % 768) 
+    return layer_indices
+
+def get_random_layer_indices(num_neurons_to_turn_off):
+    # randomly select neurons to turn off given the number of neurons to turn off
+    random_neuron_indices = torch.randperm(NUM_LAYERS * HIDDEN_DIM)[:num_neurons_to_turn_off].tolist()
+    random_layer_indices = defaultdict(list)
+    for neuron_index in random_neuron_indices:
+        layer_id = neuron_index // 768
+        random_layer_indices[layer_id].append(neuron_index % 768)
+    return random_layer_indices
+
+def save_cluster_to_MLM_loss(cluster_id_to_MLM_loss, num_clusters, distance_threshold):
+    dir = f'{CLUSTER_OUTPUT_DIR}/n_clusters{num_clusters}_distance_threshold_{distance_threshold}/'
+    if not os.path.exists(dir):
+        os.makedirs(dir)
+    with open(os.path.join(dir, 'cluster_id_to_average_MLM_loss.json'), 'w') as f:
+        json.dump(cluster_id_to_average_MLM_loss, f, indent=4)

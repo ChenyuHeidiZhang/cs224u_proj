@@ -11,7 +11,7 @@ from transformers import AutoTokenizer, BertModel, BertConfig, BertForPreTrainin
 
 from neuron import load_dataset_from_hf
 from constants import *
-from utils import load_neuron_repr, save_cluster, load_cluster, read_top_activating_tokens, select_sentences_with_tokens
+from utils import *
 from visualization import *
 
 
@@ -71,6 +71,16 @@ def compute_clusters(all_layer_repr, tokenizer, num_clusters=3, distance_thresho
     # plot_cluster_top_tokens_neuron(cluster_id_to_top_token_indices, all_layer_repr, cluster_labels, num_clusters, distance_threshold, num_top_tokens)
 
 def prepare_inputs_and_labels(batch, top_tokens, tokenizer, config, device, mask_strategy="random", mask_percentage=0.15):
+    """
+    Args:
+        batch: list of sentences
+        top_tokens: list of top activating tokens for the cluster
+        tokenizer: AutoTokenizer
+        config: BertConfig
+        device: torch.device
+        mask_strategy: mask "random" or "top"-acivating tokens in sentences
+        mask_percentage: percentage of tokens to be masked if mask_strategy is "random"
+    """
     temp = tokenizer.batch_encode_plus(
                     batch, 
                     add_special_tokens=True,
@@ -110,25 +120,48 @@ def prepare_inputs_and_labels(batch, top_tokens, tokenizer, config, device, mask
     labels[~masked_indices] = -100
     return input_ids, attention_mask, labels
 
-def model_forward_cluster_turned_off(model, config, input_ids, attention_mask, labels, layer_indices, device):
+def model_forward_cluster_turned_off(model, config, input_ids, attention_mask, labels, layer_indices, device, random=False):
+    """
+    Args:
+        model: BertForMaskedLM
+        config: BertConfig
+        input_ids: shape (batch_size, seq_len)
+        attention_mask: shape (batch_size, seq_len)
+        labels: shape (batch_size, seq_len)
+        layer_indices: dict, key is layer id, value is a list of neuron indices in that cluster
+        device: torch.device
+        random: whether to randomly turn off neurons in the cluster based on the same layer distribution of that cluster
+    """
     # define MLM loss function
     loss_fct = CrossEntropyLoss() 
 
     extended_attention_mask = model.get_extended_attention_mask(attention_mask, input_ids.size()).to(device)
     hidden_states= model.bert.embeddings(input_ids=input_ids)
-    hidden_states[:, :, layer_indices[0]] = 0 # set the activation of neurons in the embedding layer to 0
+    if random:
+        # randomly select neurons to turn off, the number of neurons to turn off in each layer is the same as the number of neurons in the cluster in each layer
+        num_neurons_to_turn_off = len(layer_indices[0])
+        neuron_indices = torch.randperm(HIDDEN_DIM)[:num_neurons_to_turn_off].tolist()
+        hidden_states[:, :, neuron_indices] = 0
+    else:
+        hidden_states[:, :, layer_indices[0]] = 0 # set the activation of neurons in the embedding layer to 0
     for layer_id in range(1, NUM_LAYERS):
         hidden_states = model.bert.encoder.layer[layer_id - 1](hidden_states, attention_mask=extended_attention_mask)[0]
         # hidden_states has shape (batch_size, sequence_length, hidden_size)
         # for each neuron in the layer, set the activation to 0
-        hidden_states[:, :, layer_indices[layer_id]] = 0
+        if random:
+            # randomly select neurons to turn off, the number of neurons to turn off in each layer is the same as the number of neurons in the cluster in each layer
+            num_neurons_to_turn_off = len(layer_indices[layer_id])
+            neuron_indices = torch.randperm(HIDDEN_DIM)[:num_neurons_to_turn_off].tolist()
+            hidden_states[:, :, neuron_indices] = 0
+        else:
+            hidden_states[:, :, layer_indices[layer_id]] = 0
     sequence_output = hidden_states # shape: (batch_size, seq_len, hidden_size)
     prediction_scores = model.cls(sequence_output) # shape: (batch_size, sequence_length, vocab_size)
     # compute MLM loss
     masked_lm_loss = loss_fct(prediction_scores.view(-1, config.vocab_size), labels.view(-1))
     return masked_lm_loss
 
-def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top", mask_percentage=0.15):
+def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top", mask_percentage=0.15, num_repeat=5, evaluation_size=96):
     '''
     Evaluate cluster using causal ablation.
 
@@ -137,6 +170,8 @@ def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top
         distance_threshold: distance threshold for AgglomerativeClustering, should be None if num_clusters is not None
         mask_strategy: mask "random" or "top"-acivating tokens in sentences
         mask_percentage: percentage of tokens to be masked if mask_strategy is "random"
+        num_repeat: number of times to repeat the random baselines
+        evaluation_size: number of sentences to evaluate on per cluster
     '''
     # load neurons in each cluster
     cluster_to_neurons = load_cluster(num_clusters=num_clusters, distance_threshold=distance_threshold)
@@ -161,22 +196,29 @@ def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top
     for cluster_id in range(num_clusters):
         # get neurons
         neuron_indices = cluster_to_neurons[str(cluster_id)]
-        # group by layer id
-        layer_indices = defaultdict(list)
-        for neuron_index in neuron_indices:
-            layer_id = neuron_index // 768
-            layer_indices[layer_id].append(neuron_index % 768)
+
+        # group by layer id, get a dictionary mapping layer_id to a list of neuron indices in that layer
+        layer_indices = get_layer_indices(neuron_indices)
+        
+        # get randomly selected neuron indices, which is in the range of 0 to NUM_LAYERS * HIDDEN_DIM, the total is equal to the number of neurons in the cluster
+        num_neurons_to_turn_off = len(neuron_indices)
+        random_layer_indices_lst = []
+        for _ in range(num_repeat):
+            random_neuron_indices = get_random_layer_indices(num_neurons_to_turn_off)
+            random_layer_indices_lst.append(random_layer_indices)
         
         # get tokens & prepare evaluate data
         top_tokens = cluster_to_tokens[str(cluster_id)]
         print("top activating tokens: ", top_tokens)
-        evaluation_split = select_sentences_with_tokens(dataset, top_tokens, size=96)
+        evaluation_split = select_sentences_with_tokens(dataset, top_tokens, size=evaluation_size)
         if len(evaluation_split) == 0:
             print("Warning: no sentence contains the tokens")
             continue
 
         average_MLM_loss = 0 # with cluster
-        average_MLM_loss_cluster_turned_off = 0 # without cluster
+        average_MLM_loss_random_lst = [0] * num_repeat # random neurons turned off
+        average_MLM_loss_random_layer_dist_lst = [0] * num_repeat # random neurons turned off following same layer distribution
+        average_MLM_loss_cluster_turned_off = 0 # neurons in cluster turned off
         with torch.no_grad():
             for start_index in tqdm(range(0, len(evaluation_split), BATCH_SIZE)):
                 batch = evaluation_split[start_index: start_index+BATCH_SIZE]
@@ -184,29 +226,43 @@ def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top
                 # prepare inputs and labels
                 input_ids, attention_mask, labels = prepare_inputs_and_labels(batch, top_tokens, tokenizer, config, device, mask_strategy=mask_strategy, mask_percentage=mask_percentage)
 
-                # without cluster
-                masked_lm_loss_cluster_turned_off = model_forward_cluster_turned_off(model, config, input_ids, attention_mask, labels, layer_indices, device)
-                average_MLM_loss_cluster_turned_off += masked_lm_loss_cluster_turned_off.item()
-
-                # with cluster
+                # do not turn off neurons
                 outputs = model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
                 masked_lm_loss = outputs.loss
                 average_MLM_loss += masked_lm_loss.item()
 
+                # turn off neurons in cluster
+                masked_lm_loss_cluster_turned_off = model_forward_cluster_turned_off(model, config, input_ids, attention_mask, labels, layer_indices, device)
+                average_MLM_loss_cluster_turned_off += masked_lm_loss_cluster_turned_off.item()
+
+                # turn off random neurons
+                for i in range(num_repeat):
+                    random_layer_indices = random_layer_indices_lst[i]
+                    masked_lm_loss_random = model_forward_cluster_turned_off(model, config, input_ids, attention_mask, labels, random_layer_indices, device)
+                    average_MLM_loss_random_lst[i] += masked_lm_loss_random.item()
+
+                # turn off neurons randomly following same layer distribution
+                for i in range(num_repeat):
+                    masked_lm_loss_random_layer_dist = model_forward_cluster_turned_off(model, config, input_ids, attention_mask, labels, layer_indices, device, random=True)
+                    average_MLM_loss_random_layer_dist_lst[i] += masked_lm_loss_random_layer_dist.item()
+                
         average_MLM_loss /= len(evaluation_split) / BATCH_SIZE
         average_MLM_loss_cluster_turned_off /= len(evaluation_split) / BATCH_SIZE
-        print(f"Cluster {cluster_id} average MLM loss: {average_MLM_loss} without cluster: {average_MLM_loss_cluster_turned_off}")
-        cluster_id_to_average_MLM_loss[cluster_id] = {
-            "with_cluster": average_MLM_loss,
-            "without_cluster": average_MLM_loss_cluster_turned_off
-        }
+        average_MLM_loss_random_lst = [item / (len(evaluation_split) / BATCH_SIZE) for item in average_MLM_loss_random_lst]
+        average_MLM_loss_random_layer_dist_lst = [item / (len(evaluation_split) / BATCH_SIZE) for item in average_MLM_loss_random_layer_dist_lst]
 
+        cluster_id_to_average_MLM_loss[cluster_id] = {
+            "nothing_turned_off": average_MLM_loss,
+            "cluster_turned_off": average_MLM_loss_cluster_turned_off,
+            "random_neuron_turned_off": average_MLM_loss_random_lst,
+            "random_neuron_turned_off_mean": np.mean(average_MLM_loss_random_lst),
+            "random_layer_dist_neuron_turned_off": average_MLM_loss_random_layer_dist_lst,
+            "random_layer_dist_neuron_turned_off_mean": np.mean(average_MLM_loss_random_layer_dist_lst)
+        }
+        print("Cluster {}: nothing_turned_off: {}, cluster_turned_off: {}, random_neuron_turned_off: {}, random_layer_dist_neuron_turned_off: {}".format(cluster_id, average_MLM_loss, average_MLM_loss_cluster_turned_off, average_MLM_loss_random_lst, average_MLM_loss_random_layer_dist_lst))
+    
     # save cluster_id_to_average_MLM_loss to file
-    dir = f'{CLUSTER_OUTPUT_DIR}/n_clusters{num_clusters}_distance_threshold_{distance_threshold}/'
-    if not os.path.exists(dir):
-        os.makedirs(dir)
-    with open(os.path.join(dir, 'cluster_id_to_average_MLM_loss.json'), 'w') as f:
-        json.dump(cluster_id_to_average_MLM_loss, f, indent=4)
+    save_cluster_to_MLM_loss(cluster_id_to_average_MLM_loss, num_clusters, distance_threshold)
 
 
 def run():
@@ -221,6 +277,6 @@ def run():
 
 if __name__ == '__main__':
     # run()
-    evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top")
+    evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96)
 
     # visualize_cluster_token_embeddings(folder_name="n_clusters50_distance_threshold_None")
