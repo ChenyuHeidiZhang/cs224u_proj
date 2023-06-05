@@ -140,7 +140,7 @@ def model_forward_cluster_turned_off(model, config, input_ids, attention_mask, l
     masked_lm_loss = loss_fct(prediction_scores.view(-1, config.vocab_size), labels.view(-1))
     return masked_lm_loss
 
-def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top", mask_percentage=0.15):
+def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top", mask_percentage=0.15, num_repeat=5):
     '''
     Evaluate cluster using causal ablation.
 
@@ -149,6 +149,7 @@ def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top
         distance_threshold: distance threshold for AgglomerativeClustering, should be None if num_clusters is not None
         mask_strategy: mask "random" or "top"-acivating tokens in sentences
         mask_percentage: percentage of tokens to be masked if mask_strategy is "random"
+        num_repeat: number of times to repeat the random baselines
     '''
     # load neurons in each cluster
     cluster_to_neurons = load_cluster(num_clusters=num_clusters, distance_threshold=distance_threshold)
@@ -173,19 +174,23 @@ def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top
     for cluster_id in range(num_clusters):
         # get neurons
         neuron_indices = cluster_to_neurons[str(cluster_id)]
-        # get randomly selected neuron indices, which is in the range of 0 to NUM_LAYERS * HIDDEN_DIM, the total is equal to the number of neurons in the cluster
-        num_neurons_to_turn_off = len(neuron_indices)
-        random_neuron_indices = torch.randperm(NUM_LAYERS * HIDDEN_DIM)[:num_neurons_to_turn_off].tolist()
 
         # group by layer id
         layer_indices = defaultdict(list)
         for neuron_index in neuron_indices:
             layer_id = neuron_index // 768
-            layer_indices[layer_id].append(neuron_index % 768)  
-        random_layer_indices = defaultdict(list)
-        for neuron_index in random_neuron_indices:
-            layer_id = neuron_index // 768
-            random_layer_indices[layer_id].append(neuron_index % 768)
+            layer_indices[layer_id].append(neuron_index % 768) 
+        
+        # get randomly selected neuron indices, which is in the range of 0 to NUM_LAYERS * HIDDEN_DIM, the total is equal to the number of neurons in the cluster
+        num_neurons_to_turn_off = len(neuron_indices)
+        random_layer_indices_lst = []
+        for _ in range(num_repeat):
+            random_neuron_indices = torch.randperm(NUM_LAYERS * HIDDEN_DIM)[:num_neurons_to_turn_off].tolist()
+            random_layer_indices = defaultdict(list)
+            for neuron_index in random_neuron_indices:
+                layer_id = neuron_index // 768
+                random_layer_indices[layer_id].append(neuron_index % 768)
+            random_layer_indices_lst.append(random_layer_indices)
         
         # get tokens & prepare evaluate data
         top_tokens = cluster_to_tokens[str(cluster_id)]
@@ -196,8 +201,8 @@ def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top
             continue
 
         average_MLM_loss = 0 # with cluster
-        average_MLM_loss_random = 0 # random neurons turned off
-        average_MLM_loss_random_layer_dist = 0 # random neurons turned off following same layer distribution
+        average_MLM_loss_random_lst = [0] * num_repeat # random neurons turned off
+        average_MLM_loss_random_layer_dist_lst = [0] * num_repeat # random neurons turned off following same layer distribution
         average_MLM_loss_cluster_turned_off = 0 # neurons in cluster turned off
         with torch.no_grad():
             for start_index in tqdm(range(0, len(evaluation_split), BATCH_SIZE)):
@@ -211,12 +216,15 @@ def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top
                 average_MLM_loss_cluster_turned_off += masked_lm_loss_cluster_turned_off.item()
 
                 # turn off random neurons
-                masked_lm_loss_random = model_forward_cluster_turned_off(model, config, input_ids, attention_mask, labels, random_layer_indices, device)
-                average_MLM_loss_random += masked_lm_loss_random.item()
+                for i in range(num_repeat):
+                    random_layer_indices = random_layer_indices_lst[i]
+                    masked_lm_loss_random = model_forward_cluster_turned_off(model, config, input_ids, attention_mask, labels, random_layer_indices, device)
+                    average_MLM_loss_random_lst[i] += masked_lm_loss_random.item()
 
                 # turn off neurons randomly following same layer distribution
-                masked_lm_loss_random_layer_dist = model_forward_cluster_turned_off(model, config, input_ids, attention_mask, labels, layer_indices, device, random=True)
-                average_MLM_loss_random_layer_dist += masked_lm_loss_random_layer_dist.item()
+                for i in range(num_repeat):
+                    masked_lm_loss_random_layer_dist = model_forward_cluster_turned_off(model, config, input_ids, attention_mask, labels, layer_indices, device, random=True)
+                    average_MLM_loss_random_layer_dist_lst[i] += masked_lm_loss_random_layer_dist.item()
                 
                 # do not turn off neurons
                 outputs = model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
@@ -224,17 +232,19 @@ def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top
                 average_MLM_loss += masked_lm_loss.item()
 
         average_MLM_loss /= len(evaluation_split) / BATCH_SIZE
-        average_MLM_loss_random /= len(evaluation_split) / BATCH_SIZE
-        average_MLM_loss_random_layer_dist /= len(evaluation_split) / BATCH_SIZE
         average_MLM_loss_cluster_turned_off /= len(evaluation_split) / BATCH_SIZE
+        average_MLM_loss_random_lst = [item / (len(evaluation_split) / BATCH_SIZE) for item in average_MLM_loss_random_lst]
+        average_MLM_loss_random_layer_dist_lst = [item / (len(evaluation_split) / BATCH_SIZE) for item in average_MLM_loss_random_layer_dist_lst]
 
         cluster_id_to_average_MLM_loss[cluster_id] = {
             "nothing_turned_off": average_MLM_loss,
             "cluster_turned_off": average_MLM_loss_cluster_turned_off,
-            "random_neuron_turned_off": average_MLM_loss_random,
-            "random_layer_dist_neuron_turned_off": average_MLM_loss_random_layer_dist,
+            "random_neuron_turned_off": average_MLM_loss_random_lst,
+            "random_neuron_turned_off_mean": np.mean(average_MLM_loss_random_lst),
+            "random_layer_dist_neuron_turned_off": average_MLM_loss_random_layer_dist_lst,
+            "random_layer_dist_neuron_turned_off_mean": np.mean(average_MLM_loss_random_layer_dist_lst)
         }
-        print("Cluster {}: nothing_turned_off: {}, cluster_turned_off: {}, random_neuron_turned_off: {}, random_layer_dist_neuron_turned_off: {}".format(cluster_id, average_MLM_loss, average_MLM_loss_cluster_turned_off, average_MLM_loss_random, average_MLM_loss_random_layer_dist))
+        print("Cluster {}: nothing_turned_off: {}, cluster_turned_off: {}, random_neuron_turned_off: {}, random_layer_dist_neuron_turned_off: {}".format(cluster_id, average_MLM_loss, average_MLM_loss_cluster_turned_off, average_MLM_loss_random_lst, average_MLM_loss_random_layer_dist_lst))
     
     # save cluster_id_to_average_MLM_loss to file
     dir = f'{CLUSTER_OUTPUT_DIR}/n_clusters{num_clusters}_distance_threshold_{distance_threshold}/'
@@ -256,6 +266,6 @@ def run():
 
 if __name__ == '__main__':
     # run()
-    evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top")
+    evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5)
 
     # visualize_cluster_token_embeddings(folder_name="n_clusters50_distance_threshold_None")
