@@ -15,23 +15,6 @@ from utils import load_neuron_repr, save_cluster, load_cluster
 from visualization import *
 
 
-def find_dissimilarity_matrix(all_layer_repr):
-    # Normalize the input tensor
-    print('Normalizing input tensor')
-    # normalize each neuron's representation to be a unit vector
-    input1_norm = torch.nn.functional.normalize(all_layer_repr, p=2, dim=1)
-    input2_norm = input1_norm.clone()
-
-    # Compute the cosine similarity using matrix multiplication
-    # similarity is now a matrix of shape (N, N) containing pairwise cosine similarities
-    print('Computing cosine similarity')
-    similarity = torch.mm(input1_norm, input2_norm.t())
-    print('Done computing similarity matrix. Shape:', similarity.shape)
-
-    # Convert similarity to dissimilarity matrix
-    dissimilarity = 1 - similarity
-    return dissimilarity
-
 def explore_cluster_distance_thresholds(dissimilarity, thresholds):
     for threshold in thresholds:
         clustering = AgglomerativeClustering(n_clusters=None, metric='precomputed', linkage='complete', distance_threshold=threshold)

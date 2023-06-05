@@ -10,7 +10,23 @@ from sklearn.manifold import TSNE
 from sklearn.decomposition import PCA
 
 from constants import *
-from cluster import find_dissimilarity_matrix
+
+def find_dissimilarity_matrix(all_layer_repr):
+    # Normalize the input tensor
+    print('Normalizing input tensor')
+    # normalize each neuron's representation to be a unit vector
+    input1_norm = torch.nn.functional.normalize(all_layer_repr, p=2, dim=1)
+    input2_norm = input1_norm.clone()
+
+    # Compute the cosine similarity using matrix multiplication
+    # similarity is now a matrix of shape (N, N) containing pairwise cosine similarities
+    print('Computing cosine similarity')
+    similarity = torch.mm(input1_norm, input2_norm.t())
+    print('Done computing similarity matrix. Shape:', similarity.shape)
+
+    # Convert similarity to dissimilarity matrix
+    dissimilarity = 1 - similarity
+    return dissimilarity
 
 def visualize_dissimilarity_matrix(all_layer_repr):
     # TODO: N is too large, put them into bins

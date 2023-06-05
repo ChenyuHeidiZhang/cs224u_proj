@@ -1,6 +1,7 @@
 from cluster import compute_clusters
 import torch
-from transformers import AutoTokenizer, BertConfig, BertModel
+from torch.nn import CrossEntropyLoss
+from transformers import AutoTokenizer, BertConfig, BertModel, BertForPreTraining
 from datasets import load_dataset
 from constants import BATCH_SIZE, NUM_LAYERS
 
@@ -23,8 +24,11 @@ def test_layer_by_layer_equal():
     tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
     tokenizer.save_pretrained('tokenizer_info')
     config = BertConfig.from_pretrained("bert-base-uncased", output_hidden_states=True)
-    model = BertModel.from_pretrained("bert-base-uncased", config=config).to(device)
+    model = BertForPreTraining.from_pretrained("bert-base-uncased", config=config).to(device)
     print("Model loaded")
+
+    # define loss function
+    loss_fct = CrossEntropyLoss() # MLM
 
     # load data
     yelp = load_dataset("yelp_review_full")
@@ -32,29 +36,48 @@ def test_layer_by_layer_equal():
     print("Dataset loaded")
 
     batch = dataset[:BATCH_SIZE]
+    temp = tokenizer.batch_encode_plus(
+                batch, add_special_tokens=True, padding=True, truncation=True, max_length=config.max_position_embeddings, return_tensors='pt', return_attention_mask=True)
+    input_ids, attention_mask = temp["input_ids"].to(device), temp["attention_mask"].to(device)
+    labels = input_ids.clone()
+    # randomly mask 15% of the input tokens to be [MASK]
+    masked_indices = torch.bernoulli(torch.full(input_ids.size(), 0.15)).bool().to(device)
+    input_ids[masked_indices] = tokenizer.mask_token_id
+        
     with torch.no_grad():
-        temp = tokenizer.batch_encode_plus(
-                    batch, add_special_tokens=True, padding=True, truncation=True, max_length=config.max_position_embeddings, return_tensors='pt', return_attention_mask=True)
-        input_ids, attention_mask = temp["input_ids"].to(device), temp["attention_mask"].to(device)
         extended_attention_mask = model.get_extended_attention_mask(attention_mask, input_ids.size()).to(device)
-        hidden_states= model.embeddings(input_ids=input_ids)
+        hidden_states= model.bert.embeddings(input_ids=input_ids)
         for layer_id in range(NUM_LAYERS - 1):
-            hidden_states = model.encoder.layer[layer_id](hidden_states, attention_mask=extended_attention_mask)[0]
+            hidden_states = model.bert.encoder.layer[layer_id](hidden_states, attention_mask=extended_attention_mask)[0]
         layer_by_layer_hidden_states = hidden_states
+        sequence_output = hidden_states # shape: (batch_size, seq_len, hidden_size)
+        pooled_output = model.bert.pooler(hidden_states) # shape: (batch_size, hidden_size)
+        layer_by_layer_prediction_scores, _ = model.cls(sequence_output, pooled_output) # shape: (batch_size, sequence_length, vocab_size)
+        # compute MLM loss
+        layer_by_layer_masked_lm_loss = loss_fct(layer_by_layer_prediction_scores.view(-1, config.vocab_size), labels.view(-1))
     
     with torch.no_grad():
-        temp = tokenizer.batch_encode_plus(
-                    batch, add_special_tokens=True, padding=True, truncation=True, max_length=config.max_position_embeddings, return_tensors='pt', return_attention_mask=True)
-        input_ids, attention_mask = temp["input_ids"].to(device), temp["attention_mask"].to(device)
-        outputs = model(input_ids=input_ids, attention_mask=attention_mask)
+        outputs = model.bert(input_ids=input_ids, attention_mask=attention_mask)
         all_hidden_states = outputs[2]
         print("len(all_hidden_states): ", len(all_hidden_states))
         encoder_last_hidden_states = all_hidden_states[-1]
+
+        # get prediction scores
+        outputs = model(input_ids=input_ids, attention_mask=attention_mask)
+        prediction_logits = outputs.prediction_logits
+        # compute MLM loss
+        masked_lm_loss = loss_fct(prediction_logits.view(-1, config.vocab_size), labels.view(-1))
     
     # assert layer_by_layer_hidden_states == encoder_last_hidden_states
     print("layer by layer is equal: ", torch.all(torch.eq(layer_by_layer_hidden_states, encoder_last_hidden_states)))
 
+    # assert layer_by_layer_prediction_scores == prediction_logits
+    print("layer by layer prediction scores is equal: ", torch.all(torch.eq(layer_by_layer_prediction_scores, prediction_logits)))
+
+    # assert layer_by_layer_masked_lm_loss == masked_lm_loss
+    print("layer by layer masked lm loss is equal: ", torch.all(torch.eq(layer_by_layer_masked_lm_loss, masked_lm_loss)))
+
 
 if __name__ == '__main__':
-    test_compute_clusters()
+    # test_compute_clusters()
     test_layer_by_layer_equal()
