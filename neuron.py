@@ -63,7 +63,7 @@ def load_dataset_from_hf(dev=False):
         data_files = {"validation": "en/c4-validation.*.json.gz"}
         dataset = load_dataset("allenai/c4", data_files=data_files, split="validation")
         # dataset = load_dataset("c4", "en", split="validation")
-        dataset = dataset["text"][:10000]  # TODO: use all data
+        dataset = dataset["text"]  # Note: using all data
     print("Dataset loaded")
     return dataset
 
