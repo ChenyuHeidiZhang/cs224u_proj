@@ -55,8 +55,10 @@ def test_layer_by_layer_equal():
     with torch.no_grad():
         extended_attention_mask = model.get_extended_attention_mask(attention_mask, input_ids.size()).to(device)
         hidden_states= model.bert.embeddings(input_ids=input_ids)
+        hidden_states[:, :, []] = 0 # turn none of them off 
         for layer_id in range(NUM_LAYERS - 1):
             hidden_states = model.bert.encoder.layer[layer_id](hidden_states, attention_mask=extended_attention_mask)[0]
+            hidden_states[:, :, []] = 0 # turn none of them off 
         layer_by_layer_hidden_states = hidden_states
         sequence_output = hidden_states # shape: (batch_size, seq_len, hidden_size)
         layer_by_layer_prediction_scores = model.cls(sequence_output) # shape: (batch_size, sequence_length, vocab_size)

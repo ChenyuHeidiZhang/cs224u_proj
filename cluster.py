@@ -70,18 +70,73 @@ def compute_clusters(all_layer_repr, tokenizer, num_clusters=3, distance_thresho
     # plot the top tokens for each cluster with their representations
     # plot_cluster_top_tokens_neuron(cluster_id_to_top_token_indices, all_layer_repr, cluster_labels, num_clusters, distance_threshold, num_top_tokens)
 
+def prepare_inputs_and_labels(batch, top_tokens, tokenizer, config, device, mask_strategy="random", mask_percentage=0.15):
+    temp = tokenizer.batch_encode_plus(
+                    batch, 
+                    add_special_tokens=True,
+                    padding=True,
+                    truncation=True, 
+                    max_length=config.max_position_embeddings, 
+                    return_tensors='pt', 
+                    return_attention_mask=True)
+    input_ids, attention_mask = temp["input_ids"].to(device), temp["attention_mask"].to(device) # shape: (batch_size, seq_len)
+    labels = input_ids.clone()
+    # set [PAD] tokens to be -100
+    labels[labels == tokenizer.pad_token_id] = -100
+    if mask_strategy == "random":
+        # randomly mask 15% of the input tokens to be [MASK]
+        masked_indices = torch.bernoulli(torch.full(input_ids.size(), mask_percentage)).bool().to(device)
+        # only mask those tokens that are not [PAD], [CLS], or [SEP]
+        masked_indices = masked_indices & (input_ids != tokenizer.pad_token_id) & (input_ids != tokenizer.cls_token_id) & (input_ids != tokenizer.sep_token_id)
+        # count number of masked indices that is not zero
+        # print("Number of masked tokens: ", torch.nonzero(masked_indices).size(0))
+        input_ids[masked_indices] = tokenizer.mask_token_id
+    elif mask_strategy == "top":
+        # TODO: the percentage of tokens being masked is far lower than 15%, maybe should random mask percentage should match this
+        # mask top activating tokens
+        token_ids = tokenizer.convert_tokens_to_ids(top_tokens)
+        masked_indices = torch.zeros(input_ids.size(), dtype=torch.bool).to(device)
+        for token_id in token_ids:
+            masked_indices = masked_indices | (input_ids == token_id)
+        # count number of masked indices that is not zero
+        # print("Number of masked tokens: ", torch.nonzero(masked_indices).size(0))
+        input_ids[masked_indices] = tokenizer.mask_token_id
+    else:
+        raise ValueError("mask_strategy must be either 'random' or 'top'")
+    # confirm that input_ids is different from labels
+    assert not torch.equal(input_ids, labels)
+    # MLM loss should ignore indices other than the masked indices
+    # set labels to -100 (ignore index) except the masked indices
+    labels[~masked_indices] = -100
+    return input_ids, attention_mask, labels
 
-def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top", mask_percentage=0.15, turn_off_cluster=True):
+def model_forward_cluster_turned_off(model, config, input_ids, attention_mask, labels, layer_indices, device):
+    # define MLM loss function
+    loss_fct = CrossEntropyLoss() 
+
+    extended_attention_mask = model.get_extended_attention_mask(attention_mask, input_ids.size()).to(device)
+    hidden_states= model.bert.embeddings(input_ids=input_ids)
+    hidden_states[:, :, layer_indices[0]] = 0 # set the activation of neurons in the embedding layer to 0
+    for layer_id in range(1, NUM_LAYERS):
+        hidden_states = model.bert.encoder.layer[layer_id - 1](hidden_states, attention_mask=extended_attention_mask)[0]
+        # hidden_states has shape (batch_size, sequence_length, hidden_size)
+        # for each neuron in the layer, set the activation to 0
+        hidden_states[:, :, layer_indices[layer_id]] = 0
+    sequence_output = hidden_states # shape: (batch_size, seq_len, hidden_size)
+    prediction_scores = model.cls(sequence_output) # shape: (batch_size, sequence_length, vocab_size)
+    # compute MLM loss
+    masked_lm_loss = loss_fct(prediction_scores.view(-1, config.vocab_size), labels.view(-1))
+    return masked_lm_loss
+
+def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top", mask_percentage=0.15):
     '''
     Evaluate cluster using causal ablation.
-    For each cluster, for each neuron in that cluster, manually set the activation to 0, and compute the MLM loss.
 
     Args:
         num_clusters: number of clusters, should be None if distance_threshold is not None
         distance_threshold: distance threshold for AgglomerativeClustering, should be None if num_clusters is not None
         mask_strategy: mask "random" or "top"-acivating tokens in sentences
         mask_percentage: percentage of tokens to be masked if mask_strategy is "random"
-        turn_off_cluster: whether to turn off neurons in the cluster
     '''
     # load neurons in each cluster
     cluster_to_neurons = load_cluster(num_clusters=num_clusters, distance_threshold=distance_threshold)
@@ -101,81 +156,57 @@ def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top
     # load data
     dataset = load_dataset_from_hf(dev=(DATASET=='yelp'))
 
-    # define loss function
-    loss_fct = CrossEntropyLoss() # MLM
-
+    cluster_id_to_average_MLM_loss = {}
     # for each cluster, for neurons in that cluster, manually set the activation to 0
     for cluster_id in range(num_clusters):
         # get neurons
         neuron_indices = cluster_to_neurons[str(cluster_id)]
         # group by layer id
         layer_indices = defaultdict(list)
-        if turn_off_cluster:
-            for neuron_index in neuron_indices:
-                layer_id = neuron_index // 768
-                layer_indices[layer_id].append(neuron_index % 768)
+        for neuron_index in neuron_indices:
+            layer_id = neuron_index // 768
+            layer_indices[layer_id].append(neuron_index % 768)
         
         # get tokens & prepare evaluate data
-        tokens = cluster_to_tokens[str(cluster_id)]
-        print("tokens: ", tokens)
-        evaluation_split = select_sentences_with_tokens(dataset, tokens, size=1000)
+        top_tokens = cluster_to_tokens[str(cluster_id)]
+        print("top activating tokens: ", top_tokens)
+        evaluation_split = select_sentences_with_tokens(dataset, top_tokens, size=96)
         if len(evaluation_split) == 0:
             print("Warning: no sentence contains the tokens")
             continue
 
-        average_MLM_loss = 0
+        average_MLM_loss = 0 # with cluster
+        average_MLM_loss_cluster_turned_off = 0 # without cluster
         with torch.no_grad():
             for start_index in tqdm(range(0, len(evaluation_split), BATCH_SIZE)):
                 batch = evaluation_split[start_index: start_index+BATCH_SIZE]
 
-                temp = tokenizer.batch_encode_plus(
-                    batch, add_special_tokens=True, padding=True, truncation=True, max_length=config.max_position_embeddings, return_tensors='pt', return_attention_mask=True)
-                input_ids, attention_mask = temp["input_ids"].to(device), temp["attention_mask"].to(device) # shape: (batch_size, seq_len)
-                labels = input_ids.clone()
-                # set [PAD] tokens to be -100
-                labels[labels == tokenizer.pad_token_id] = -100
-                if mask_strategy == "random":
-                    # randomly mask 15% of the input tokens to be [MASK]
-                    masked_indices = torch.bernoulli(torch.full(input_ids.size(), mask_percentage)).bool().to(device)
-                    # only mask those tokens that are not [PAD], [CLS], or [SEP]
-                    masked_indices = masked_indices & (input_ids != tokenizer.pad_token_id) & (input_ids != tokenizer.cls_token_id) & (input_ids != tokenizer.sep_token_id)
-                    # count number of masked indices that is not zero
-                    # print("Number of masked tokens: ", torch.nonzero(masked_indices).size(0))
-                    input_ids[masked_indices] = tokenizer.mask_token_id
-                elif mask_strategy == "top":
-                    # TODO: the percentage of tokens being masked is far lower than 15%, maybe should random mask percentage should match this
-                    # mask top activating tokens
-                    token_ids = tokenizer.convert_tokens_to_ids(tokens)
-                    masked_indices = torch.zeros(input_ids.size(), dtype=torch.bool).to(device)
-                    for token_id in token_ids:
-                        masked_indices = masked_indices | (input_ids == token_id)
-                    # count number of masked indices that is not zero
-                    # print("Number of masked tokens: ", torch.nonzero(masked_indices).size(0))
-                    input_ids[masked_indices] = tokenizer.mask_token_id
-                else:
-                    raise ValueError("mask_strategy must be either 'random' or 'top'")
-                # confirm that input_ids is different from labels
-                assert not torch.equal(input_ids, labels)
-                # MLM loss should ignore indices other than the masked indices
-                # set labels to -100 (ignore index) except the masked indices
-                labels[~masked_indices] = -100
+                # prepare inputs and labels
+                input_ids, attention_mask, labels = prepare_inputs_and_labels(batch, top_tokens, tokenizer, config, device, mask_strategy=mask_strategy, mask_percentage=mask_percentage)
 
-                extended_attention_mask = model.get_extended_attention_mask(attention_mask, input_ids.size()).to(device)
-                
-                hidden_states= model.bert.embeddings(input_ids=input_ids)
-                hidden_states[:, :, layer_indices[0]] = 0 # set the activation of neurons in the embedding layer to 0
-                for layer_id in range(1, NUM_LAYERS):
-                    hidden_states = model.bert.encoder.layer[layer_id - 1](hidden_states, attention_mask=extended_attention_mask)[0]
-                    # hidden_states has shape (batch_size, sequence_length, hidden_size)
-                    # for each neuron in the layer, set the activation to 0
-                    hidden_states[:, :, layer_indices[layer_id]] = 0
-                sequence_output = hidden_states # shape: (batch_size, seq_len, hidden_size)
-                prediction_scores = model.cls(sequence_output) # shape: (batch_size, sequence_length, vocab_size)
-                # compute MLM loss
-                masked_lm_loss = loss_fct(prediction_scores.view(-1, config.vocab_size), labels.view(-1))
+                # without cluster
+                masked_lm_loss_cluster_turned_off = model_forward_cluster_turned_off(model, config, input_ids, attention_mask, labels, layer_indices, device)
+                average_MLM_loss_cluster_turned_off += masked_lm_loss_cluster_turned_off.item()
+
+                # with cluster
+                outputs = model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
+                masked_lm_loss = outputs.loss
                 average_MLM_loss += masked_lm_loss.item()
+
         average_MLM_loss /= len(evaluation_split) / BATCH_SIZE
-        print(f"Cluster {cluster_id} average MLM loss: {average_MLM_loss}")
+        average_MLM_loss_cluster_turned_off /= len(evaluation_split) / BATCH_SIZE
+        print(f"Cluster {cluster_id} average MLM loss: {average_MLM_loss} without cluster: {average_MLM_loss_cluster_turned_off}")
+        cluster_id_to_average_MLM_loss[cluster_id] = {
+            "with_cluster": average_MLM_loss,
+            "without_cluster": average_MLM_loss_cluster_turned_off
+        }
+
+    # save cluster_id_to_average_MLM_loss to file
+    dir = f'{CLUSTER_OUTPUT_DIR}/n_clusters{num_clusters}_distance_threshold_{distance_threshold}/'
+    if not os.path.exists(dir):
+        os.makedirs(dir)
+    with open(os.path.join(dir, 'cluster_id_to_average_MLM_loss.json'), 'w') as f:
+        json.dump(cluster_id_to_average_MLM_loss, f, indent=4)
 
 
 def run():
@@ -190,6 +221,6 @@ def run():
 
 if __name__ == '__main__':
     # run()
-    evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", turn_off_cluster=True)
+    evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top")
 
     # visualize_cluster_token_embeddings(folder_name="n_clusters50_distance_threshold_None")
