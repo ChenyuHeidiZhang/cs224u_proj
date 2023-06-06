@@ -20,6 +20,7 @@ def cluster_internal_distance(dissimilarity_matrix, cluster_dict):
     
 
 def enumerate_cluster_number(dissimilarity_matrix, min_num_cluster, max_num_cluster):
+    all_distances_list = []
     top_distances_list = []
     
     for num_clusters in range(min_num_cluster, max_num_cluster + 1):
@@ -32,26 +33,33 @@ def enumerate_cluster_number(dissimilarity_matrix, min_num_cluster, max_num_clus
             indices = np.where(cluster_labels == cluster_id)[0]
             clusters[cluster_id] = indices.tolist()
         max_distance_list = cluster_internal_distance(dissimilarity_matrix, clusters)
+        all_distances_list.append(max_distance_list)
         top_distances = sorted(max_distance_list, reverse=True)[:NUM_TOP_DISTANCE]
         top_distances_list.append(top_distances)
 
-    top_distances_list = np.array(top_distances_list) # (max_num_cluster + 1 - min_num_cluster, NUM_TOP_DISTANCE)
+    # plot all distances versus num_clusters
+    plt.figure(figsize=(20, 20))
+    for num_clusters in range(min_num_cluster, max_num_cluster + 1):
+        plt.scatter([num_clusters] * num_clusters, all_distances_list[num_clusters-min_num_cluster])
+    plt.xlabel("num clusters")
+    plt.ylabel("all distances")
+    plt.title(f"all dist vs. num clusters")
+    plt.savefig(os.path.join(VISUALIZATION_DIR, f"all_dist_vs_num_clusters_{min_num_cluster}-{max_num_cluster}.png"), dpi=400)
 
+    # plot NUM_TOP_DISTANCE versus num_clusters
+    top_distances_list = np.array(top_distances_list) # (max_num_cluster + 1 - min_num_cluster, NUM_TOP_DISTANCE)
     plt.figure(figsize=(20, 20))
     for idx in range(NUM_TOP_DISTANCE):
         plt.scatter(np.arange(min_num_cluster, max_num_cluster+1), top_distances_list[:, idx])
     plt.xlabel("num clusters")
-    plt.ylabel("max distance")
-    plt.title("Dissimilarity matrix")
-    plt.savefig(os.path.join(VISUALIZATION_DIR, "max_dist_vs_num_clusters.png"), dpi=400)
-
-
-
+    plt.ylabel("top distances")
+    plt.title(f"top {NUM_TOP_DISTANCE} dist vs. num clusters")
+    plt.savefig(os.path.join(VISUALIZATION_DIR, f"top_{NUM_TOP_DISTANCE}_dist_vs_num_clusters_{min_num_cluster}-{max_num_cluster}.png"), dpi=400)
     
 
 
 if __name__ == '__main__':
     all_layer_repr = load_neuron_repr()
     dissimilarity = find_dissimilarity_matrix(all_layer_repr)
-    enumerate_cluster_number(dissimilarity, 10, 100)
+    enumerate_cluster_number(dissimilarity, 10, 80)
 
