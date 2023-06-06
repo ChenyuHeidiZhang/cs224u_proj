@@ -61,5 +61,5 @@ def enumerate_cluster_number(dissimilarity_matrix, min_num_cluster, max_num_clus
 if __name__ == '__main__':
     all_layer_repr = load_neuron_repr()
     dissimilarity = find_dissimilarity_matrix(all_layer_repr)
-    enumerate_cluster_number(dissimilarity, 10, 80)
+    enumerate_cluster_number(dissimilarity, 10, 45)
 
