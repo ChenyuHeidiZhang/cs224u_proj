@@ -78,9 +78,9 @@ def get_random_layer_indices(num_neurons_to_turn_off):
         random_layer_indices[layer_id].append(neuron_index % 768)
     return random_layer_indices
 
-def save_cluster_to_MLM_loss(cluster_id_to_MLM_loss, num_clusters, distance_threshold):
+def save_cluster_to_MLM_loss(cluster_id_to_MLM_loss, num_clusters, distance_threshold, deactivate_strategy="zero"):
     dir = f'{CLUSTER_OUTPUT_DIR}/n_clusters{num_clusters}_distance_threshold_{distance_threshold}/'
     if not os.path.exists(dir):
         os.makedirs(dir)
-    with open(os.path.join(dir, 'cluster_id_to_average_MLM_loss.json'), 'w') as f:
-        json.dump(cluster_id_to_average_MLM_loss, f, indent=4)
+    with open(os.path.join(dir, f'deactivate_{deactivate_strategy}_cluster_id_to_average_MLM_loss.json'), 'w') as f:
+        json.dump(cluster_id_to_MLM_loss, f, indent=4)

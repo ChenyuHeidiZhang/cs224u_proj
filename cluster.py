@@ -120,7 +120,7 @@ def prepare_inputs_and_labels(batch, top_tokens, tokenizer, config, device, mask
     labels[~masked_indices] = -100
     return input_ids, attention_mask, labels
 
-def model_forward_cluster_turned_off(model, config, input_ids, attention_mask, labels, layer_indices, device, random=False):
+def model_forward_cluster_turned_off(model, config, input_ids, attention_mask, labels, layer_indices, device, random=False, deactivate_strategy="zero"):
     """
     Args:
         model: BertForMaskedLM
@@ -131,6 +131,7 @@ def model_forward_cluster_turned_off(model, config, input_ids, attention_mask, l
         layer_indices: dict, key is layer id, value is a list of neuron indices in that cluster
         device: torch.device
         random: whether to randomly turn off neurons in the cluster based on the same layer distribution of that cluster
+        deactivate_strategy: "zero" or "mean" of hidden state for an example when deactivating neurons in a cluster
     """
     # define MLM loss function
     loss_fct = CrossEntropyLoss() 
@@ -141,9 +142,10 @@ def model_forward_cluster_turned_off(model, config, input_ids, attention_mask, l
         # randomly select neurons to turn off, the number of neurons to turn off in each layer is the same as the number of neurons in the cluster in each layer
         num_neurons_to_turn_off = len(layer_indices[0])
         neuron_indices = torch.randperm(HIDDEN_DIM)[:num_neurons_to_turn_off].tolist()
-        hidden_states[:, :, neuron_indices] = 0
+        hidden_states[:, :, neuron_indices] = 0 if deactivate_strategy == "zero" else torch.mean(hidden_states, dim=2, keepdim=True)[:, :, 0][:, :, None]
     else:
-        hidden_states[:, :, layer_indices[0]] = 0 # set the activation of neurons in the embedding layer to 0
+        # set the activation of neurons in the embedding layer to 0
+        hidden_states[:, :, layer_indices[0]] = 0 if deactivate_strategy == "zero" else torch.mean(hidden_states, dim=2, keepdim=True)[:, :, 0][:, :, None]
     for layer_id in range(1, NUM_LAYERS):
         hidden_states = model.bert.encoder.layer[layer_id - 1](hidden_states, attention_mask=extended_attention_mask)[0]
         # hidden_states has shape (batch_size, sequence_length, hidden_size)
@@ -152,16 +154,17 @@ def model_forward_cluster_turned_off(model, config, input_ids, attention_mask, l
             # randomly select neurons to turn off, the number of neurons to turn off in each layer is the same as the number of neurons in the cluster in each layer
             num_neurons_to_turn_off = len(layer_indices[layer_id])
             neuron_indices = torch.randperm(HIDDEN_DIM)[:num_neurons_to_turn_off].tolist()
-            hidden_states[:, :, neuron_indices] = 0
+            hidden_states[:, :, neuron_indices] = 0 if deactivate_strategy == "zero" else torch.mean(hidden_states, dim=2, keepdim=True)[:, :, 0][:, :, None]
         else:
-            hidden_states[:, :, layer_indices[layer_id]] = 0
+            # print("set mean to: ", torch.mean(hidden_states, dim=2, keepdim=True)[:, :, 0][:, :, None].shape)
+            hidden_states[:, :, layer_indices[layer_id]] = 0 if deactivate_strategy == "zero" else torch.mean(hidden_states, dim=2, keepdim=True)[:, :, 0][:, :, None]
     sequence_output = hidden_states # shape: (batch_size, seq_len, hidden_size)
     prediction_scores = model.cls(sequence_output) # shape: (batch_size, sequence_length, vocab_size)
     # compute MLM loss
     masked_lm_loss = loss_fct(prediction_scores.view(-1, config.vocab_size), labels.view(-1))
     return masked_lm_loss
 
-def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top", mask_percentage=0.15, num_repeat=5, evaluation_size=96):
+def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top", mask_percentage=0.15, num_repeat=5, evaluation_size=96, deactivate_strategy="zero"):
     '''
     Evaluate cluster using causal ablation.
 
@@ -172,6 +175,7 @@ def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top
         mask_percentage: percentage of tokens to be masked if mask_strategy is "random"
         num_repeat: number of times to repeat the random baselines
         evaluation_size: number of sentences to evaluate on per cluster
+        deactivate_strategy: "zero" or "mean" of hidden state for an example when deactivating neurons in a cluster
     '''
     # load neurons in each cluster
     cluster_to_neurons = load_cluster(num_clusters=num_clusters, distance_threshold=distance_threshold)
@@ -204,7 +208,7 @@ def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top
         num_neurons_to_turn_off = len(neuron_indices)
         random_layer_indices_lst = []
         for _ in range(num_repeat):
-            random_neuron_indices = get_random_layer_indices(num_neurons_to_turn_off)
+            random_layer_indices = get_random_layer_indices(num_neurons_to_turn_off)
             random_layer_indices_lst.append(random_layer_indices)
         
         # get tokens & prepare evaluate data
@@ -232,18 +236,18 @@ def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top
                 average_MLM_loss += masked_lm_loss.item()
 
                 # turn off neurons in cluster
-                masked_lm_loss_cluster_turned_off = model_forward_cluster_turned_off(model, config, input_ids, attention_mask, labels, layer_indices, device)
+                masked_lm_loss_cluster_turned_off = model_forward_cluster_turned_off(model, config, input_ids, attention_mask, labels, layer_indices, device, deactivate_strategy=deactivate_strategy)
                 average_MLM_loss_cluster_turned_off += masked_lm_loss_cluster_turned_off.item()
 
                 # turn off random neurons
                 for i in range(num_repeat):
                     random_layer_indices = random_layer_indices_lst[i]
-                    masked_lm_loss_random = model_forward_cluster_turned_off(model, config, input_ids, attention_mask, labels, random_layer_indices, device)
+                    masked_lm_loss_random = model_forward_cluster_turned_off(model, config, input_ids, attention_mask, labels, random_layer_indices, device, deactivate_strategy=deactivate_strategy)
                     average_MLM_loss_random_lst[i] += masked_lm_loss_random.item()
 
                 # turn off neurons randomly following same layer distribution
                 for i in range(num_repeat):
-                    masked_lm_loss_random_layer_dist = model_forward_cluster_turned_off(model, config, input_ids, attention_mask, labels, layer_indices, device, random=True)
+                    masked_lm_loss_random_layer_dist = model_forward_cluster_turned_off(model, config, input_ids, attention_mask, labels, layer_indices, device, random=True, deactivate_strategy=deactivate_strategy)
                     average_MLM_loss_random_layer_dist_lst[i] += masked_lm_loss_random_layer_dist.item()
                 
         average_MLM_loss /= len(evaluation_split) / BATCH_SIZE
@@ -262,7 +266,7 @@ def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top
         print("Cluster {}: nothing_turned_off: {}, cluster_turned_off: {}, random_neuron_turned_off: {}, random_layer_dist_neuron_turned_off: {}".format(cluster_id, average_MLM_loss, average_MLM_loss_cluster_turned_off, average_MLM_loss_random_lst, average_MLM_loss_random_layer_dist_lst))
     
     # save cluster_id_to_average_MLM_loss to file
-    save_cluster_to_MLM_loss(cluster_id_to_average_MLM_loss, num_clusters, distance_threshold)
+    save_cluster_to_MLM_loss(cluster_id_to_average_MLM_loss, num_clusters, distance_threshold, deactivate_strategy=deactivate_strategy)
 
 
 def run():
@@ -277,6 +281,6 @@ def run():
 
 if __name__ == '__main__':
     # run()
-    evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96)
+    evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean")
 
     # visualize_cluster_token_embeddings(folder_name="n_clusters50_distance_threshold_None")

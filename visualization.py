@@ -167,7 +167,7 @@ def visualize_cluster_token_embeddings(folder_name, max_clusters_to_plot=5):
     plt.legend()
     plt.savefig(os.path.join(VISUALIZATION_DIR, folder_name, f"cluster_token_embeddings_{max_clusters_to_plot}.png"))
 
-def plot_causal_intervention(filepath, num_clusters, distance_threshold):
+def plot_causal_intervention(filepath, num_clusters, distance_threshold, deactivate_strategy="mean"):
     dir = f"{VISUALIZATION_DIR}/n_clusters{num_clusters}_distance_threshold_{distance_threshold}/"
     with open(filepath, "r") as f:
         cluster_id_to_average_MLM_loss = json.load(f)
@@ -191,8 +191,8 @@ def plot_causal_intervention(filepath, num_clusters, distance_threshold):
     plt.ylabel("Average MLM loss")
     plt.title("Causal interventions: different MLM loss")
     plt.legend()
-    plt.savefig(os.path.join(dir, "causal_intervention.png"))
+    plt.savefig(os.path.join(dir, f"deactivate_{deactivate_strategy}_causal_intervention.png"))
 
 
 if __name__=="__main__":
-    plot_causal_intervention("yelp/cluster_outputs/n_clusters50_distance_threshold_None/cluster_id_to_average_MLM_loss.json", 50, None)
+    plot_causal_intervention("yelp/cluster_outputs/n_clusters50_distance_threshold_None/deactivate_mean_cluster_id_to_average_MLM_loss.json", 50, None)
