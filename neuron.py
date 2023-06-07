@@ -59,10 +59,10 @@ def get_neuron_representations(model, tokenizer, config, dataset, device):
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(device)
-    tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
     tokenizer.save_pretrained('tokenizer_info')
-    config = BertConfig.from_pretrained("bert-base-uncased", output_hidden_states=True)
-    model = BertModel.from_pretrained("bert-base-uncased", config=config).to(device)
+    config = BertConfig.from_pretrained(MODEL_NAME, output_hidden_states=True)
+    model = BertModel.from_pretrained(MODEL_NAME, config=config).to(device)
     print("Model loaded")
 
     # VOCAB_SIZE = config.vocab_size # including added tokens

@@ -90,7 +90,7 @@ def explore_cluster_distance_thresholds(dissimilarity, thresholds):
 
 def run():
     all_layer_repr = utils.load_neuron_repr()
-    tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
     # one of num_cluster and distance_threshold must be None
     # compute_clusters(all_layer_repr, tokenizer, num_clusters=20, distance_threshold=None, num_top_tokens=10)
     compute_clusters(all_layer_repr, tokenizer, num_clusters=50, distance_threshold=None, num_top_tokens=10)

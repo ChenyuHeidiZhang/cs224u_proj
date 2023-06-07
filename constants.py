@@ -1,3 +1,4 @@
+MODEL_NAME = "bert-base-uncased"
 NUM_LAYERS = 13
 BATCH_SIZE = 64
 HIDDEN_DIM = 768
@@ -5,3 +6,5 @@ DATASET = "c4"
 CLUSTER_OUTPUT_DIR = f'{DATASET}/cluster_outputs'
 VISUALIZATION_DIR = f'{DATASET}/visualizations'
 NEURON_REPR_DIR = f'{DATASET}/neuron_repr'
+CONCEPTS_DIR = f'{DATASET}/concepts'
+CONCEPT_WORDS_FILE = f'concept_words.txt'
