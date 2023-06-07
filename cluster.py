@@ -12,6 +12,24 @@ from constants import *
 import utils
 from visualization import plot_cluster_neurons, plot_cluster_top_tokens_neuron, visualize_cluster_token_embeddings
 
+def find_tf_idf_neuron_repr(all_layer_repr):
+    # all_layer_repr is a tensor of shape N * D where N is the number of neurons and D is the dimensionality (vocab size)
+    # Compute the term frequency (TF) matrix
+    tf_matrix = all_layer_repr / torch.sum(all_layer_repr, dim=1, keepdim=True)
+
+    # Compute the document frequency (DF) vector
+    df_vector = torch.count_nonzero(tf_matrix, dim=0)
+
+    # Compute the inverse document frequency (IDF) vector
+    N = len(all_layer_repr)  # Total number of documents
+    idf_vector = torch.log(torch.tensor(N, dtype=torch.float32) / (df_vector + 1))
+
+    # Compute the TF-IDF matrix
+    tfidf_matrix = tf_matrix  * idf_vector
+
+    tfidf_matrix = torch.nan_to_num(tfidf_matrix, nan=0.0)
+
+    return tfidf_matrix
 
 def find_dissimilarity_matrix(all_layer_repr):
     # Normalize the input tensor
@@ -91,7 +109,8 @@ def explore_cluster_distance_thresholds(dissimilarity, thresholds):
 
 def run():
     all_layer_repr = utils.load_neuron_repr()
-    # all_layer_repr = utils.load_and_mask_neuron_repr(threshold=1.5)
+    # all_layer_repr = utils.load_and_mask_neuron_repr(threshold=1)
+    all_layer_repr = find_tf_idf_neuron_repr(all_layer_repr)
     tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
     # one of num_cluster and distance_threshold must be None
     # compute_clusters(all_layer_repr, tokenizer, num_clusters=20, distance_threshold=None, num_top_tokens=10)
