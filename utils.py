@@ -6,6 +6,20 @@ import numpy as np
 import random
 from collections import defaultdict
 from transformers import AutoTokenizer
+from datasets import load_dataset
+
+
+def load_dataset_from_hf(dev=False):
+    if dev:
+        yelp = load_dataset("yelp_review_full")
+        dataset = yelp["test"]["text"][:10000] # for development purpose, only use the first 10000 examples in yelp["test"]["text"]
+    else:
+        data_files = {"validation": "en/c4-validation.*.json.gz"}
+        dataset = load_dataset("allenai/c4", data_files=data_files, split="validation")
+        # dataset = load_dataset("c4", "en", split="validation")
+        dataset = dataset["text"]  # Note: using all data
+    print("Dataset loaded")
+    return dataset
 
 def load_neuron_repr():
     print('Loading neuron representations')
@@ -17,6 +31,7 @@ def load_neuron_repr():
     # concatenate all layers
     all_layer_repr = torch.cat([neuron_representations_avg[i] for i in range(NUM_LAYERS)], dim=0) # (num_layers * num_neurons, vocab_size)
     return all_layer_repr
+
 
 def save_cluster(cluster_labels, num_clusters, distance_threshold):
     dir = f'{CLUSTER_OUTPUT_DIR}/n_clusters{num_clusters}_distance_threshold_{distance_threshold}/'

@@ -1,7 +1,10 @@
-from utils import *
-from visualization import *
+import os
+import torch
 from sklearn.cluster import AgglomerativeClustering
 import matplotlib.pyplot as plt
+
+from utils import load_neuron_repr
+from cluster import find_dissimilarity_matrix
 from constants import *
 
 

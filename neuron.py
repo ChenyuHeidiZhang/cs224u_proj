@@ -3,8 +3,8 @@ import torch
 from tqdm import tqdm
 import json
 from transformers import AutoTokenizer, BertModel, BertConfig
-from datasets import load_dataset
 
+from utils import load_dataset_from_hf
 from constants import *
 
 def get_neuron_representations(model, tokenizer, config, dataset, device):
@@ -54,18 +54,6 @@ def get_neuron_representations(model, tokenizer, config, dataset, device):
 
     return neuron_representations_avg
 
-
-def load_dataset_from_hf(dev=False):
-    if dev:
-        yelp = load_dataset("yelp_review_full")
-        dataset = yelp["test"]["text"][:10000] # for development purpose, only use the first 10000 examples in yelp["test"]["text"]
-    else:
-        data_files = {"validation": "en/c4-validation.*.json.gz"}
-        dataset = load_dataset("allenai/c4", data_files=data_files, split="validation")
-        # dataset = load_dataset("c4", "en", split="validation")
-        dataset = dataset["text"]  # Note: using all data
-    print("Dataset loaded")
-    return dataset
 
 
 def main():
