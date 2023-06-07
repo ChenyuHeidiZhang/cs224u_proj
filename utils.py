@@ -35,8 +35,8 @@ def load_neuron_repr():
 
 def load_and_mask_neuron_repr(threshold=1.5):
     all_layer_repr = load_neuron_repr() # (num_layers * num_neurons, vocab_size)
-    # set the neuron representation that is smaller than the threshold to 0
-    all_layer_repr[all_layer_repr < threshold] = 0
+    # set the neuron representation whose absolute value is smaller than the threshold to 0
+    all_layer_repr[all_layer_repr.abs() < threshold] = 0
     print(f"Number of tokens that are non zero: {torch.nonzero(all_layer_repr).shape[0]}")
     print(f"Average number of tokens that are non zero per neuron: {torch.nonzero(all_layer_repr).shape[0]/ (NUM_LAYERS * HIDDEN_DIM)}")
     return all_layer_repr
