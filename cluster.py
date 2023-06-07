@@ -32,7 +32,8 @@ def find_dissimilarity_matrix(all_layer_repr):
 
 
 def get_cluster_top_tokens(all_layer_repr, tokenizer, cluster_labels, num_clusters, distance_threshold, num_top_tokens):
-    dir = f'{CLUSTER_OUTPUT_DIR}/n_clusters{num_clusters}_distance_threshold_{distance_threshold}/'
+    # dir = f'{CLUSTER_OUTPUT_DIR}/n_clusters{num_clusters}_distance_threshold_{distance_threshold}/'
+    dir = f'{CLUSTER_OUTPUT_DIR}/n_clusters{num_clusters}_threshold1/'
     if not os.path.exists(dir):
         os.makedirs(dir)
     cluster_id_to_top_token_indices = {}
@@ -89,7 +90,8 @@ def explore_cluster_distance_thresholds(dissimilarity, thresholds):
 
 
 def run():
-    all_layer_repr = utils.load_neuron_repr()
+    # all_layer_repr = utils.load_neuron_repr()
+    all_layer_repr = utils.load_and_mask_neuron_repr(threshold=1)
     tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
     # one of num_cluster and distance_threshold must be None
     # compute_clusters(all_layer_repr, tokenizer, num_clusters=20, distance_threshold=None, num_top_tokens=10)
@@ -99,6 +101,6 @@ def run():
 
 
 if __name__ == '__main__':
-    # run()
+    run()
 
-    visualize_cluster_token_embeddings(folder_name="n_clusters50_distance_threshold_None")
+    # visualize_cluster_token_embeddings(folder_name="n_clusters50_distance_threshold_None")

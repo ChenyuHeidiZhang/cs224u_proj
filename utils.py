@@ -4,6 +4,7 @@ import json
 import os
 import numpy as np
 import random
+from tqdm import tqdm
 from collections import defaultdict
 from transformers import AutoTokenizer
 from datasets import load_dataset
@@ -22,14 +23,22 @@ def load_dataset_from_hf(dev=False):
     return dataset
 
 def load_neuron_repr():
-    print('Loading neuron representations')
+    print(f'Loading neuron representations from {NEURON_REPR_DIR}')
     neuron_representations_avg = {}
-    for i in range(NUM_LAYERS):
+    for i in tqdm(range(NUM_LAYERS)):
         with open(f'{NEURON_REPR_DIR}/neuron_repr_{i}.json', 'r') as f:
             neuron_representations_avg[i] = torch.tensor(json.load(f)).t()  # shape (vocab_size, num_neurons) -> (num_neurons, vocab_size); num_neurons is hidden_dim
 
     # concatenate all layers
     all_layer_repr = torch.cat([neuron_representations_avg[i] for i in range(NUM_LAYERS)], dim=0) # (num_layers * num_neurons, vocab_size)
+    return all_layer_repr
+
+def load_and_mask_neuron_repr(threshold=1.5):
+    all_layer_repr = load_neuron_repr() # (num_layers * num_neurons, vocab_size)
+    # set the neuron representation that is smaller than the threshold to 0
+    all_layer_repr[all_layer_repr < threshold] = 0
+    print(f"Number of tokens that are non zero: {torch.nonzero(all_layer_repr).shape[0]}")
+    print(f"Average number of tokens that are non zero per neuron: {torch.nonzero(all_layer_repr).shape[0]/ (NUM_LAYERS * HIDDEN_DIM)}")
     return all_layer_repr
 
 
