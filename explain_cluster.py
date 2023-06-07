@@ -71,7 +71,7 @@ def compute_iou_score(cluster_rep, concept, tokenizer):
     return iou_score.item()
 
 
-def build_concept_for_cluster(cluster_rep, concept_words, tokenizer, beam_size=1, max_len=5, num_concepts_to_return=1):
+def build_concept_for_cluster(cluster_rep, concept_words, tokenizer, beam_size=5, max_len=1, num_concepts_to_return=5):
     '''build compositional concept for a cluster with beam search
     cluster_rep: shape (num_neurons, vocab_size)
     concept_words: list of concept words
