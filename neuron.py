@@ -3,8 +3,9 @@ import torch
 from tqdm import tqdm
 import json
 from transformers import AutoTokenizer, BertModel, BertConfig
+import fasttext.util
 
-from utils import load_dataset_from_hf
+from utils import load_dataset_from_hf, load_and_mask_neuron_repr
 from constants import *
 
 def get_neuron_representations(model, tokenizer, config, dataset, device):
@@ -55,6 +56,42 @@ def get_neuron_representations(model, tokenizer, config, dataset, device):
     return neuron_representations_avg
 
 
+def augment_neuron_repr_with_token_similarity(tokenizer, topk_neigh=5, score_discount=0.5):
+    fasttext.util.download_model('en', if_exists='ignore')  # English
+    print("Loading FastText model...")
+    ft = fasttext.load_model('cc.en.300.bin')
+
+    # load all vocab
+    vocab = tokenizer.get_vocab()  # token to id dict
+    # load neuron representations
+    all_layer_repr = load_and_mask_neuron_repr()  # (all_num_neurons, vocab_size)
+    # for each token in the vocab, find the topk most similar tokens by fasttext and their similarity scores
+    all_layer_repr_aug = all_layer_repr.clone()
+    for token_id in tqdm(range(all_layer_repr.size(1))):
+        # for each token in the vocab, find the topk most similar tokens by fasttext and their similarity scores
+        token = tokenizer.convert_ids_to_tokens(token_id)
+        neighbors = ft.get_nearest_neighbors(token)
+        selected_neighbor_indices = []
+        selected_neighbor_scores = []
+        for (score, neigh) in neighbors:
+            if neigh in vocab:
+                selected_neighbor_indices.append(vocab[neigh])
+                selected_neighbor_scores.append(score * score_discount)
+            if len(selected_neighbor_indices) == topk_neigh:
+                break
+        # print(token, selected_neighbor_indices)
+        # add the similarity_score * activation of each of the topk neighbor tokens to the current neuron representation
+        all_layer_repr_aug[:, token_id] += torch.sum(all_layer_repr[:, selected_neighbor_indices] * torch.tensor(selected_neighbor_scores).unsqueeze(0), dim=1)
+
+    # save the augmented neuron representations to file
+    save_path = os.path.join(NEURON_REPR_DIR, 'neuron_repr_augmented.json')
+    if not os.path.exists(NEURON_REPR_DIR):
+        os.makedirs(NEURON_REPR_DIR)
+    all_layer_repr_aug = all_layer_repr_aug.tolist()
+    with open(save_path, 'w') as f:
+        json.dump(all_layer_repr_aug, f)
+
+
 
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -79,4 +116,6 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # main()
+    tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+    augment_neuron_repr_with_token_similarity(tokenizer, topk_neigh=5, score_discount=0.5)

@@ -41,6 +41,13 @@ def load_and_mask_neuron_repr(threshold=1.5):
     print(f"Average number of tokens that are non zero per neuron: {torch.nonzero(all_layer_repr).shape[0]/ (NUM_LAYERS * HIDDEN_DIM)}")
     return all_layer_repr
 
+def load_augmented_neuron_repr():
+    print(f'Loading augmented neuron representations from {NEURON_REPR_DIR}')
+    with open(f'{NEURON_REPR_DIR}/neuron_repr_augmented.json', 'r') as f:
+        all_layer_repr = torch.tensor(json.load(f))  # (num_neurons, vocab_size)
+
+    return all_layer_repr
+
 
 def save_cluster(cluster_labels, num_clusters, distance_threshold):
     dir = f'{CLUSTER_OUTPUT_DIR}/n_clusters{num_clusters}_distance_threshold_{distance_threshold}/'
