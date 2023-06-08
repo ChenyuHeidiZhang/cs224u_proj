@@ -1,0 +1,1472 @@
+{
+    "0": {
+        "nothing_turned_off": 12.32453727722168,
+        "nothing_turned_off_random_tokens": 2.0914578437805176,
+        "cluster_turned_off": 11.9578275680542,
+        "cluster_turned_off_random_tokens": 4.347854137420654,
+        "random_position_dist_neuron_turned_off": [
+            13.026646614074707,
+            12.378863334655762,
+            12.496855735778809,
+            12.324588775634766,
+            12.368168830871582
+        ],
+        "random_position_dist_neuron_turned_off_mean": 12.519024658203126,
+        "random_neuron_turned_off": [
+            13.276510238647461,
+            11.79500675201416,
+            13.155214309692383,
+            13.380945205688477,
+            12.7896146774292
+        ],
+        "random_neuron_turned_off_mean": 12.879458236694337,
+        "random_layer_dist_neuron_turned_off": [
+            12.235422134399414,
+            13.306042671203613,
+            11.913102149963379,
+            12.809614181518555,
+            12.299296379089355
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 12.512695503234863
+    },
+    "1": {
+        "nothing_turned_off": 7.379672527313232,
+        "nothing_turned_off_random_tokens": 2.3326027393341064,
+        "cluster_turned_off": 7.528806209564209,
+        "cluster_turned_off_random_tokens": 4.90669584274292,
+        "random_position_dist_neuron_turned_off": [
+            7.4912109375,
+            7.43590784072876,
+            7.548320293426514,
+            7.494266510009766,
+            7.593050956726074
+        ],
+        "random_position_dist_neuron_turned_off_mean": 7.512551307678223,
+        "random_neuron_turned_off": [
+            7.645193576812744,
+            9.05186939239502,
+            9.967394828796387,
+            7.754210472106934,
+            7.543490409851074
+        ],
+        "random_neuron_turned_off_mean": 8.392431735992432,
+        "random_layer_dist_neuron_turned_off": [
+            8.72783088684082,
+            7.648054122924805,
+            7.210620880126953,
+            8.32891845703125,
+            8.491683959960938
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 8.081421661376954
+    },
+    "2": {
+        "nothing_turned_off": 8.68039608001709,
+        "nothing_turned_off_random_tokens": 2.7590653896331787,
+        "cluster_turned_off": 8.797019958496094,
+        "cluster_turned_off_random_tokens": 5.709546089172363,
+        "random_position_dist_neuron_turned_off": [
+            8.464343070983887,
+            8.463849067687988,
+            8.703237533569336,
+            8.432313919067383,
+            8.50341796875
+        ],
+        "random_position_dist_neuron_turned_off_mean": 8.51343231201172,
+        "random_neuron_turned_off": [
+            8.621506690979004,
+            8.901688575744629,
+            8.854393005371094,
+            8.839692115783691,
+            7.9287943840026855
+        ],
+        "random_neuron_turned_off_mean": 8.62921495437622,
+        "random_layer_dist_neuron_turned_off": [
+            9.137812614440918,
+            8.516921043395996,
+            9.352676391601562,
+            9.456075668334961,
+            8.735257148742676
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 9.039748573303223
+    },
+    "3": {
+        "nothing_turned_off": 8.690340042114258,
+        "nothing_turned_off_random_tokens": 2.4436004161834717,
+        "cluster_turned_off": 8.744982719421387,
+        "cluster_turned_off_random_tokens": 4.924327850341797,
+        "random_position_dist_neuron_turned_off": [
+            8.78133487701416,
+            8.790313720703125,
+            8.710136413574219,
+            9.297887802124023,
+            9.165064811706543
+        ],
+        "random_position_dist_neuron_turned_off_mean": 8.948947525024414,
+        "random_neuron_turned_off": [
+            8.990357398986816,
+            9.960410118103027,
+            8.800413131713867,
+            9.381462097167969,
+            9.110687255859375
+        ],
+        "random_neuron_turned_off_mean": 9.24866600036621,
+        "random_layer_dist_neuron_turned_off": [
+            8.842142105102539,
+            10.810654640197754,
+            12.918664932250977,
+            8.918926239013672,
+            9.170013427734375
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 10.132080268859863
+    },
+    "4": {
+        "nothing_turned_off": 2.850325584411621,
+        "nothing_turned_off_random_tokens": 1.0816370248794556,
+        "cluster_turned_off": 3.2023003101348877,
+        "cluster_turned_off_random_tokens": 2.1656136512756348,
+        "random_position_dist_neuron_turned_off": [
+            3.5993690490722656,
+            3.260082960128784,
+            3.4631738662719727,
+            3.206346035003662,
+            3.3812127113342285
+        ],
+        "random_position_dist_neuron_turned_off_mean": 3.3820369243621826,
+        "random_neuron_turned_off": [
+            3.4168105125427246,
+            3.759239912033081,
+            3.2417643070220947,
+            3.783186197280884,
+            3.726877450942993
+        ],
+        "random_neuron_turned_off_mean": 3.5855756759643556,
+        "random_layer_dist_neuron_turned_off": [
+            3.7568023204803467,
+            3.501939296722412,
+            3.867321252822876,
+            3.682835578918457,
+            3.212644100189209
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 3.60430850982666
+    },
+    "5": {
+        "nothing_turned_off": 19.176876976376487,
+        "nothing_turned_off_random_tokens": 1.9029521942138672,
+        "cluster_turned_off": 19.017374674479168,
+        "cluster_turned_off_random_tokens": 5.564657665434337,
+        "random_position_dist_neuron_turned_off": [
+            19.345926920572918,
+            19.45060802641369,
+            19.485267275855655,
+            19.467844645182293,
+            18.96699451264881
+        ],
+        "random_position_dist_neuron_turned_off_mean": 19.343328276134674,
+        "random_neuron_turned_off": [
+            19.576129731677828,
+            19.534971691313245,
+            19.45015607561384,
+            20.064159574962797,
+            19.626246861049108
+        ],
+        "random_neuron_turned_off_mean": 19.650332786923364,
+        "random_layer_dist_neuron_turned_off": [
+            19.569966634114582,
+            19.836489722842263,
+            21.54359363374256,
+            19.949974423363095,
+            19.403799874441965
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 20.060764857700896
+    },
+    "6": {
+        "nothing_turned_off": 11.316144943237305,
+        "nothing_turned_off_random_tokens": 2.389512300491333,
+        "cluster_turned_off": 11.361430168151855,
+        "cluster_turned_off_random_tokens": 4.866909503936768,
+        "random_position_dist_neuron_turned_off": [
+            11.321691513061523,
+            14.961392402648926,
+            11.159289360046387,
+            11.549433708190918,
+            11.686113357543945
+        ],
+        "random_position_dist_neuron_turned_off_mean": 12.13558406829834,
+        "random_neuron_turned_off": [
+            12.31338119506836,
+            11.268871307373047,
+            11.29664134979248,
+            11.468639373779297,
+            10.863686561584473
+        ],
+        "random_neuron_turned_off_mean": 11.442243957519532,
+        "random_layer_dist_neuron_turned_off": [
+            11.843243598937988,
+            13.143254280090332,
+            14.542505264282227,
+            11.227746963500977,
+            11.234814643859863
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 12.398312950134278
+    },
+    "7": {
+        "nothing_turned_off": 78.16062622070312,
+        "nothing_turned_off_random_tokens": 2.776334285736084,
+        "cluster_turned_off": 87.03388671875,
+        "cluster_turned_off_random_tokens": 36.379721069335936,
+        "random_position_dist_neuron_turned_off": [
+            75.99832763671876,
+            80.72487182617188,
+            77.98853149414063,
+            76.25796508789062,
+            79.22697143554687
+        ],
+        "random_position_dist_neuron_turned_off_mean": 78.03933349609375,
+        "random_neuron_turned_off": [
+            81.23302001953125,
+            76.56430053710938,
+            75.76626586914062,
+            79.35654296875,
+            82.83560180664062
+        ],
+        "random_neuron_turned_off_mean": 79.15114624023438,
+        "random_layer_dist_neuron_turned_off": [
+            73.36215209960938,
+            83.71398315429687,
+            83.98793334960938,
+            91.67164916992188,
+            81.97362060546875
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 82.94186767578125
+    },
+    "8": {
+        "nothing_turned_off": 4.7975897789001465,
+        "nothing_turned_off_random_tokens": 2.3678486347198486,
+        "cluster_turned_off": 5.076375961303711,
+        "cluster_turned_off_random_tokens": 4.889964580535889,
+        "random_position_dist_neuron_turned_off": [
+            4.956239700317383,
+            4.569011211395264,
+            4.91045618057251,
+            4.388749599456787,
+            5.588311672210693
+        ],
+        "random_position_dist_neuron_turned_off_mean": 4.882553672790527,
+        "random_neuron_turned_off": [
+            5.082108020782471,
+            5.044863224029541,
+            4.482160568237305,
+            5.413680076599121,
+            5.214870929718018
+        ],
+        "random_neuron_turned_off_mean": 5.047536563873291,
+        "random_layer_dist_neuron_turned_off": [
+            4.909346580505371,
+            5.1632819175720215,
+            8.860699653625488,
+            5.04341983795166,
+            5.539176940917969
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 5.903184986114502
+    },
+    "9": {
+        "nothing_turned_off": 11.2100191116333,
+        "nothing_turned_off_random_tokens": 3.393343925476074,
+        "cluster_turned_off": 11.483731269836426,
+        "cluster_turned_off_random_tokens": 6.818382263183594,
+        "random_position_dist_neuron_turned_off": [
+            10.993492126464844,
+            11.233607292175293,
+            11.666810035705566,
+            11.25318717956543,
+            11.257437705993652
+        ],
+        "random_position_dist_neuron_turned_off_mean": 11.280906867980956,
+        "random_neuron_turned_off": [
+            11.853090286254883,
+            10.76172924041748,
+            11.235346794128418,
+            11.5353364944458,
+            11.392093658447266
+        ],
+        "random_neuron_turned_off_mean": 11.35551929473877,
+        "random_layer_dist_neuron_turned_off": [
+            10.741477012634277,
+            10.384293556213379,
+            11.112685203552246,
+            12.169628143310547,
+            11.64490795135498
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 11.210598373413086
+    },
+    "10": {
+        "nothing_turned_off": 7.611387252807617,
+        "nothing_turned_off_random_tokens": 2.8737454414367676,
+        "cluster_turned_off": 7.528467178344727,
+        "cluster_turned_off_random_tokens": 5.722426414489746,
+        "random_position_dist_neuron_turned_off": [
+            8.263280868530273,
+            7.355840682983398,
+            7.79248046875,
+            7.783242702484131,
+            7.394108772277832
+        ],
+        "random_position_dist_neuron_turned_off_mean": 7.717790699005127,
+        "random_neuron_turned_off": [
+            8.167744636535645,
+            8.263854026794434,
+            7.582950592041016,
+            7.858513355255127,
+            7.927553176879883
+        ],
+        "random_neuron_turned_off_mean": 7.96012315750122,
+        "random_layer_dist_neuron_turned_off": [
+            7.732316970825195,
+            7.938803672790527,
+            7.320207118988037,
+            7.66806697845459,
+            11.038740158081055
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 8.33962697982788
+    },
+    "11": {
+        "nothing_turned_off": 10.70584487915039,
+        "nothing_turned_off_random_tokens": 2.574075222015381,
+        "cluster_turned_off": 10.645858764648438,
+        "cluster_turned_off_random_tokens": 5.2592878341674805,
+        "random_position_dist_neuron_turned_off": [
+            11.023930549621582,
+            10.851205825805664,
+            10.852087020874023,
+            10.556829452514648,
+            10.593456268310547
+        ],
+        "random_position_dist_neuron_turned_off_mean": 10.775501823425293,
+        "random_neuron_turned_off": [
+            12.109126091003418,
+            10.468782424926758,
+            11.185819625854492,
+            10.5947904586792,
+            11.089427947998047
+        ],
+        "random_neuron_turned_off_mean": 11.089589309692382,
+        "random_layer_dist_neuron_turned_off": [
+            13.4316987991333,
+            11.599103927612305,
+            12.888317108154297,
+            10.710118293762207,
+            10.744241714477539
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 11.874695968627929
+    },
+    "12": {
+        "nothing_turned_off": 6.7408447265625,
+        "nothing_turned_off_random_tokens": 2.2451014518737793,
+        "cluster_turned_off": 7.037790775299072,
+        "cluster_turned_off_random_tokens": 4.786318302154541,
+        "random_position_dist_neuron_turned_off": [
+            7.276875972747803,
+            6.6699042320251465,
+            6.686690330505371,
+            6.9394025802612305,
+            7.536009788513184
+        ],
+        "random_position_dist_neuron_turned_off_mean": 7.021776580810547,
+        "random_neuron_turned_off": [
+            7.789763450622559,
+            8.327975273132324,
+            7.958827018737793,
+            7.794713020324707,
+            7.555802822113037
+        ],
+        "random_neuron_turned_off_mean": 7.885416316986084,
+        "random_layer_dist_neuron_turned_off": [
+            7.615811824798584,
+            7.856328964233398,
+            6.86198616027832,
+            7.585573673248291,
+            7.168856620788574
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 7.417711448669434
+    },
+    "13": {
+        "nothing_turned_off": 8.183426856994629,
+        "nothing_turned_off_random_tokens": 2.3997855186462402,
+        "cluster_turned_off": 8.498998641967773,
+        "cluster_turned_off_random_tokens": 4.768680095672607,
+        "random_position_dist_neuron_turned_off": [
+            8.375849723815918,
+            8.228976249694824,
+            8.350976943969727,
+            8.417780876159668,
+            8.081119537353516
+        ],
+        "random_position_dist_neuron_turned_off_mean": 8.29094066619873,
+        "random_neuron_turned_off": [
+            8.379130363464355,
+            9.125061988830566,
+            11.73676872253418,
+            8.503538131713867,
+            8.370906829833984
+        ],
+        "random_neuron_turned_off_mean": 9.22308120727539,
+        "random_layer_dist_neuron_turned_off": [
+            8.193626403808594,
+            10.24453067779541,
+            7.830061435699463,
+            8.986732482910156,
+            8.34599781036377
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 8.720189762115478
+    },
+    "14": {
+        "nothing_turned_off": 11.4434175491333,
+        "nothing_turned_off_random_tokens": 3.005627393722534,
+        "cluster_turned_off": 11.83457088470459,
+        "cluster_turned_off_random_tokens": 5.939115047454834,
+        "random_position_dist_neuron_turned_off": [
+            11.4826021194458,
+            11.551165580749512,
+            11.423294067382812,
+            11.279972076416016,
+            11.380989074707031
+        ],
+        "random_position_dist_neuron_turned_off_mean": 11.423604583740234,
+        "random_neuron_turned_off": [
+            12.447372436523438,
+            12.135506629943848,
+            11.901679039001465,
+            11.010818481445312,
+            12.069472312927246
+        ],
+        "random_neuron_turned_off_mean": 11.912969779968261,
+        "random_layer_dist_neuron_turned_off": [
+            10.7118501663208,
+            11.750663757324219,
+            12.365501403808594,
+            11.86865234375,
+            11.579544067382812
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 11.655242347717286
+    },
+    "15": {
+        "nothing_turned_off": 18.145072605298914,
+        "nothing_turned_off_random_tokens": 3.482351303100586,
+        "cluster_turned_off": 18.45143857209579,
+        "cluster_turned_off_random_tokens": 9.774201102878736,
+        "random_position_dist_neuron_turned_off": [
+            18.740438710088316,
+            17.86015120796535,
+            18.37058158542799,
+            18.294862166694973,
+            23.01324462890625
+        ],
+        "random_position_dist_neuron_turned_off_mean": 19.255855659816575,
+        "random_neuron_turned_off": [
+            18.511237103006113,
+            19.439271346382473,
+            19.161093006963316,
+            18.3906077509341,
+            18.13383152173913
+        ],
+        "random_neuron_turned_off_mean": 18.727208145805026,
+        "random_layer_dist_neuron_turned_off": [
+            18.1318531865659,
+            17.902148702870246,
+            18.87541795813519,
+            18.534407905910324,
+            18.44560042671535
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 18.3778856360394
+    },
+    "16": {
+        "nothing_turned_off": 12.29127025604248,
+        "nothing_turned_off_random_tokens": 2.922898054122925,
+        "cluster_turned_off": 11.973230361938477,
+        "cluster_turned_off_random_tokens": 5.817103862762451,
+        "random_position_dist_neuron_turned_off": [
+            12.55390453338623,
+            12.318048477172852,
+            12.02751350402832,
+            12.220609664916992,
+            12.098113059997559
+        ],
+        "random_position_dist_neuron_turned_off_mean": 12.243637847900391,
+        "random_neuron_turned_off": [
+            12.57798957824707,
+            11.270051956176758,
+            12.508332252502441,
+            11.811532020568848,
+            12.066332817077637
+        ],
+        "random_neuron_turned_off_mean": 12.046847724914551,
+        "random_layer_dist_neuron_turned_off": [
+            11.907747268676758,
+            11.75278091430664,
+            12.106904029846191,
+            12.175338745117188,
+            12.197857856750488
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 12.028125762939453
+    },
+    "17": {
+        "nothing_turned_off": 3.9108049869537354,
+        "nothing_turned_off_random_tokens": 2.6266136169433594,
+        "cluster_turned_off": 5.417440891265869,
+        "cluster_turned_off_random_tokens": 5.526597499847412,
+        "random_position_dist_neuron_turned_off": [
+            3.750653028488159,
+            3.9424359798431396,
+            3.9617488384246826,
+            4.093014240264893,
+            3.6669933795928955
+        ],
+        "random_position_dist_neuron_turned_off_mean": 3.882969093322754,
+        "random_neuron_turned_off": [
+            4.564201354980469,
+            4.465832710266113,
+            4.3167033195495605,
+            4.288150310516357,
+            3.801847457885742
+        ],
+        "random_neuron_turned_off_mean": 4.287347030639649,
+        "random_layer_dist_neuron_turned_off": [
+            4.642894268035889,
+            4.791938781738281,
+            3.9880781173706055,
+            3.5384039878845215,
+            4.096406936645508
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 4.211544418334961
+    },
+    "18": {
+        "nothing_turned_off": 7.972371578216553,
+        "nothing_turned_off_random_tokens": 2.1579418182373047,
+        "cluster_turned_off": 8.026549339294434,
+        "cluster_turned_off_random_tokens": 4.313831329345703,
+        "random_position_dist_neuron_turned_off": [
+            7.836755275726318,
+            7.77466344833374,
+            8.11556625366211,
+            8.047727584838867,
+            8.006362915039062
+        ],
+        "random_position_dist_neuron_turned_off_mean": 7.95621509552002,
+        "random_neuron_turned_off": [
+            7.972126007080078,
+            10.236871719360352,
+            7.826412200927734,
+            7.982495307922363,
+            7.704827785491943
+        ],
+        "random_neuron_turned_off_mean": 8.344546604156495,
+        "random_layer_dist_neuron_turned_off": [
+            7.945523262023926,
+            7.86797571182251,
+            8.471132278442383,
+            7.921363830566406,
+            8.012717247009277
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 8.043742465972901
+    },
+    "19": {
+        "nothing_turned_off": 9.399758338928223,
+        "nothing_turned_off_random_tokens": 2.8278915882110596,
+        "cluster_turned_off": 9.441238403320312,
+        "cluster_turned_off_random_tokens": 5.694838047027588,
+        "random_position_dist_neuron_turned_off": [
+            9.564970016479492,
+            9.731732368469238,
+            9.317779541015625,
+            9.639595985412598,
+            9.07253360748291
+        ],
+        "random_position_dist_neuron_turned_off_mean": 9.465322303771973,
+        "random_neuron_turned_off": [
+            9.488682746887207,
+            9.415654182434082,
+            9.483839988708496,
+            9.734192848205566,
+            9.845874786376953
+        ],
+        "random_neuron_turned_off_mean": 9.593648910522461,
+        "random_layer_dist_neuron_turned_off": [
+            14.035212516784668,
+            9.435260772705078,
+            13.497196197509766,
+            10.102992057800293,
+            9.5003080368042
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 11.3141939163208
+    },
+    "20": {
+        "nothing_turned_off": 14.24488353729248,
+        "nothing_turned_off_random_tokens": 2.3757784366607666,
+        "cluster_turned_off": 14.097383499145508,
+        "cluster_turned_off_random_tokens": 4.810366630554199,
+        "random_position_dist_neuron_turned_off": [
+            16.889558792114258,
+            14.339686393737793,
+            14.065929412841797,
+            14.2210111618042,
+            13.79132080078125
+        ],
+        "random_position_dist_neuron_turned_off_mean": 14.66150131225586,
+        "random_neuron_turned_off": [
+            13.745023727416992,
+            16.411279678344727,
+            14.088042259216309,
+            13.72346019744873,
+            14.715860366821289
+        ],
+        "random_neuron_turned_off_mean": 14.536733245849609,
+        "random_layer_dist_neuron_turned_off": [
+            14.143204689025879,
+            14.818611145019531,
+            14.76430606842041,
+            14.88028621673584,
+            14.45346736907959
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 14.61197509765625
+    },
+    "21": {
+        "nothing_turned_off": 5.652958869934082,
+        "nothing_turned_off_random_tokens": 2.4891390800476074,
+        "cluster_turned_off": 5.515778064727783,
+        "cluster_turned_off_random_tokens": 5.0194854736328125,
+        "random_position_dist_neuron_turned_off": [
+            5.564521789550781,
+            5.747110843658447,
+            5.792727947235107,
+            5.823915004730225,
+            5.697054386138916
+        ],
+        "random_position_dist_neuron_turned_off_mean": 5.725065994262695,
+        "random_neuron_turned_off": [
+            5.635398864746094,
+            5.9503889083862305,
+            5.832038879394531,
+            5.909125804901123,
+            5.811417579650879
+        ],
+        "random_neuron_turned_off_mean": 5.827674007415771,
+        "random_layer_dist_neuron_turned_off": [
+            5.683003902435303,
+            6.190320014953613,
+            9.076665878295898,
+            5.875847816467285,
+            7.824549674987793
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 6.930077457427979
+    },
+    "22": {
+        "nothing_turned_off": 7.741826057434082,
+        "nothing_turned_off_random_tokens": 1.7307376861572266,
+        "cluster_turned_off": 7.988278865814209,
+        "cluster_turned_off_random_tokens": 3.6233553886413574,
+        "random_position_dist_neuron_turned_off": [
+            8.03869915008545,
+            8.32202434539795,
+            8.227033615112305,
+            8.004171371459961,
+            8.00673770904541
+        ],
+        "random_position_dist_neuron_turned_off_mean": 8.119733238220215,
+        "random_neuron_turned_off": [
+            8.29035472869873,
+            7.801698207855225,
+            8.424795150756836,
+            7.582054138183594,
+            8.262144088745117
+        ],
+        "random_neuron_turned_off_mean": 8.0722092628479,
+        "random_layer_dist_neuron_turned_off": [
+            8.30494499206543,
+            8.052526473999023,
+            7.76757287979126,
+            8.43382453918457,
+            8.197896003723145
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 8.151352977752685
+    },
+    "23": {
+        "nothing_turned_off": 9.214241981506348,
+        "nothing_turned_off_random_tokens": 2.6874232292175293,
+        "cluster_turned_off": 9.254602432250977,
+        "cluster_turned_off_random_tokens": 5.511892318725586,
+        "random_position_dist_neuron_turned_off": [
+            9.312666893005371,
+            9.403544425964355,
+            11.214069366455078,
+            9.493203163146973,
+            9.507996559143066
+        ],
+        "random_position_dist_neuron_turned_off_mean": 9.786296081542968,
+        "random_neuron_turned_off": [
+            9.202914237976074,
+            9.44388484954834,
+            9.509109497070312,
+            9.313851356506348,
+            9.47207260131836
+        ],
+        "random_neuron_turned_off_mean": 9.388366508483887,
+        "random_layer_dist_neuron_turned_off": [
+            9.842194557189941,
+            9.639690399169922,
+            11.321915626525879,
+            9.20363998413086,
+            9.487136840820312
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 9.898915481567382
+    },
+    "24": {
+        "nothing_turned_off": 10.498748779296875,
+        "nothing_turned_off_random_tokens": 1.695510745048523,
+        "cluster_turned_off": 11.801962716238839,
+        "cluster_turned_off_random_tokens": 5.625562758672805,
+        "random_position_dist_neuron_turned_off": [
+            10.293512980143229,
+            11.084604899088541,
+            10.671707153320312,
+            10.631610688709078,
+            10.831178211030506
+        ],
+        "random_position_dist_neuron_turned_off_mean": 10.702522786458331,
+        "random_neuron_turned_off": [
+            11.193133399600075,
+            10.533891223725819,
+            12.15311758858817,
+            12.065852573939733,
+            13.785573323567709
+        ],
+        "random_neuron_turned_off_mean": 11.946313621884302,
+        "random_layer_dist_neuron_turned_off": [
+            11.891294206891741,
+            12.70806158156622,
+            12.518682570684524,
+            12.15702383858817,
+            11.936952863420759
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 12.242403012230284
+    },
+    "25": {
+        "nothing_turned_off": 57.15019607543945,
+        "nothing_turned_off_random_tokens": 2.772557020187378,
+        "cluster_turned_off": 57.6884765625,
+        "cluster_turned_off_random_tokens": 22.263885498046875,
+        "random_position_dist_neuron_turned_off": [
+            58.068817138671875,
+            58.63410568237305,
+            56.07096862792969,
+            55.0662727355957,
+            55.85792922973633
+        ],
+        "random_position_dist_neuron_turned_off_mean": 56.73961868286133,
+        "random_neuron_turned_off": [
+            55.36441421508789,
+            58.1047248840332,
+            62.73579025268555,
+            58.36195373535156,
+            58.261932373046875
+        ],
+        "random_neuron_turned_off_mean": 58.56576309204102,
+        "random_layer_dist_neuron_turned_off": [
+            56.14057922363281,
+            57.45927047729492,
+            59.84912109375,
+            54.525753021240234,
+            59.22154235839844
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 57.43925323486328
+    },
+    "26": {
+        "nothing_turned_off": 12.127691268920898,
+        "nothing_turned_off_random_tokens": 2.7275938987731934,
+        "cluster_turned_off": 12.340448379516602,
+        "cluster_turned_off_random_tokens": 5.5629706382751465,
+        "random_position_dist_neuron_turned_off": [
+            12.056815147399902,
+            12.014132499694824,
+            12.11750602722168,
+            12.388640403747559,
+            12.900712966918945
+        ],
+        "random_position_dist_neuron_turned_off_mean": 12.295561408996582,
+        "random_neuron_turned_off": [
+            12.77793025970459,
+            13.18474292755127,
+            12.760824203491211,
+            14.366975784301758,
+            13.239786148071289
+        ],
+        "random_neuron_turned_off_mean": 13.266051864624023,
+        "random_layer_dist_neuron_turned_off": [
+            12.778474807739258,
+            15.302101135253906,
+            12.652735710144043,
+            12.411357879638672,
+            12.548115730285645
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 13.138557052612304
+    },
+    "27": {
+        "nothing_turned_off": 6.256399631500244,
+        "nothing_turned_off_random_tokens": 2.0750222206115723,
+        "cluster_turned_off": 6.252161502838135,
+        "cluster_turned_off_random_tokens": 4.138384819030762,
+        "random_position_dist_neuron_turned_off": [
+            6.32542085647583,
+            6.641971111297607,
+            6.280811309814453,
+            6.164736747741699,
+            6.06474494934082
+        ],
+        "random_position_dist_neuron_turned_off_mean": 6.295536994934082,
+        "random_neuron_turned_off": [
+            6.2757744789123535,
+            6.748037815093994,
+            6.6694841384887695,
+            7.0074992179870605,
+            6.941751480102539
+        ],
+        "random_neuron_turned_off_mean": 6.728509426116943,
+        "random_layer_dist_neuron_turned_off": [
+            8.24773120880127,
+            6.026341915130615,
+            8.376988410949707,
+            7.850515365600586,
+            6.311787128448486
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 7.362672805786133
+    },
+    "28": {
+        "nothing_turned_off": 9.953279495239258,
+        "nothing_turned_off_random_tokens": 2.406320810317993,
+        "cluster_turned_off": 9.515246391296387,
+        "cluster_turned_off_random_tokens": 4.798953533172607,
+        "random_position_dist_neuron_turned_off": [
+            10.159466743469238,
+            9.625225067138672,
+            9.474030494689941,
+            10.335423469543457,
+            10.174152374267578
+        ],
+        "random_position_dist_neuron_turned_off_mean": 9.953659629821777,
+        "random_neuron_turned_off": [
+            11.011364936828613,
+            12.293134689331055,
+            10.623628616333008,
+            10.523280143737793,
+            11.124223709106445
+        ],
+        "random_neuron_turned_off_mean": 11.115126419067384,
+        "random_layer_dist_neuron_turned_off": [
+            10.527640342712402,
+            11.16156005859375,
+            9.876176834106445,
+            10.494291305541992,
+            9.855216979980469
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 10.382977104187011
+    },
+    "29": {
+        "nothing_turned_off": 11.201966285705566,
+        "nothing_turned_off_random_tokens": 3.119711399078369,
+        "cluster_turned_off": 11.937612533569336,
+        "cluster_turned_off_random_tokens": 6.339199542999268,
+        "random_position_dist_neuron_turned_off": [
+            11.210051536560059,
+            11.726262092590332,
+            11.813182830810547,
+            11.258315086364746,
+            11.10920238494873
+        ],
+        "random_position_dist_neuron_turned_off_mean": 11.423402786254883,
+        "random_neuron_turned_off": [
+            11.093955993652344,
+            15.952078819274902,
+            11.060370445251465,
+            11.458341598510742,
+            11.924772262573242
+        ],
+        "random_neuron_turned_off_mean": 12.29790382385254,
+        "random_layer_dist_neuron_turned_off": [
+            11.39179801940918,
+            11.695323944091797,
+            11.507723808288574,
+            11.159383773803711,
+            14.313611030578613
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 12.013568115234374
+    },
+    "30": {
+        "nothing_turned_off": 9.110270624575408,
+        "nothing_turned_off_random_tokens": 1.6071743965148926,
+        "cluster_turned_off": 8.85413990850034,
+        "cluster_turned_off_random_tokens": 4.391412486200747,
+        "random_position_dist_neuron_turned_off": [
+            9.194809623386549,
+            9.292335841966713,
+            12.784764828889266,
+            9.466143400772758,
+            9.45641161047894
+        ],
+        "random_position_dist_neuron_turned_off_mean": 10.038893061098843,
+        "random_neuron_turned_off": [
+            10.142486572265625,
+            9.36443627398947,
+            8.948108175526494,
+            9.25535716181216,
+            9.418473616890285
+        ],
+        "random_neuron_turned_off_mean": 9.425772360096806,
+        "random_layer_dist_neuron_turned_off": [
+            9.897366067637568,
+            10.218278304390285,
+            9.136749931003736,
+            9.325286865234375,
+            9.4846888003142
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 9.612473993716032
+    },
+    "31": {
+        "nothing_turned_off": 2.8902783393859863,
+        "nothing_turned_off_random_tokens": 0.13029395043849945,
+        "cluster_turned_off": 9.673478126525879,
+        "cluster_turned_off_random_tokens": 21.485614776611328,
+        "random_position_dist_neuron_turned_off": [
+            8.596540451049805,
+            6.747250556945801,
+            6.823054790496826,
+            12.013763427734375,
+            6.0282697677612305
+        ],
+        "random_position_dist_neuron_turned_off_mean": 8.041775798797607,
+        "random_neuron_turned_off": [
+            43.027278900146484,
+            3.789860486984253,
+            18.4619140625,
+            37.77860641479492,
+            725.4393310546875
+        ],
+        "random_neuron_turned_off_mean": 165.69939818382264,
+        "random_layer_dist_neuron_turned_off": [
+            10.5950288772583,
+            1.766175627708435,
+            9.065061569213867,
+            771.9248046875,
+            1.5107003450393677
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 158.972354221344
+    },
+    "32": {
+        "nothing_turned_off": 10.567488670349121,
+        "nothing_turned_off_random_tokens": 2.242971181869507,
+        "cluster_turned_off": 10.674786567687988,
+        "cluster_turned_off_random_tokens": 4.366805076599121,
+        "random_position_dist_neuron_turned_off": [
+            10.8591947555542,
+            10.598796844482422,
+            10.616058349609375,
+            10.688730239868164,
+            10.918262481689453
+        ],
+        "random_position_dist_neuron_turned_off_mean": 10.736208534240722,
+        "random_neuron_turned_off": [
+            10.393255233764648,
+            10.92164134979248,
+            11.19412899017334,
+            10.115337371826172,
+            11.673761367797852
+        ],
+        "random_neuron_turned_off_mean": 10.859624862670898,
+        "random_layer_dist_neuron_turned_off": [
+            10.926238059997559,
+            13.759988784790039,
+            10.578377723693848,
+            10.686631202697754,
+            10.766422271728516
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 11.343531608581543
+    },
+    "33": {
+        "nothing_turned_off": 2.7695064544677734,
+        "nothing_turned_off_random_tokens": 2.3605875968933105,
+        "cluster_turned_off": 2.767346143722534,
+        "cluster_turned_off_random_tokens": 4.7476606369018555,
+        "random_position_dist_neuron_turned_off": [
+            2.8330323696136475,
+            2.6687235832214355,
+            2.8576138019561768,
+            2.7634358406066895,
+            2.881763458251953
+        ],
+        "random_position_dist_neuron_turned_off_mean": 2.8009138107299805,
+        "random_neuron_turned_off": [
+            2.734915018081665,
+            2.746372938156128,
+            2.6695761680603027,
+            2.843883752822876,
+            2.6468021869659424
+        ],
+        "random_neuron_turned_off_mean": 2.7283100128173827,
+        "random_layer_dist_neuron_turned_off": [
+            2.921424388885498,
+            2.6905009746551514,
+            2.8505654335021973,
+            2.645258665084839,
+            2.8703525066375732
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 2.795620393753052
+    },
+    "34": {
+        "nothing_turned_off": 4.534239768981934,
+        "nothing_turned_off_random_tokens": 2.33432936668396,
+        "cluster_turned_off": 4.535030841827393,
+        "cluster_turned_off_random_tokens": 4.723616600036621,
+        "random_position_dist_neuron_turned_off": [
+            4.468036651611328,
+            4.61131477355957,
+            4.675015449523926,
+            4.411635398864746,
+            4.302087783813477
+        ],
+        "random_position_dist_neuron_turned_off_mean": 4.493618011474609,
+        "random_neuron_turned_off": [
+            4.475210666656494,
+            4.066239356994629,
+            4.669898509979248,
+            4.438966274261475,
+            4.850676536560059
+        ],
+        "random_neuron_turned_off_mean": 4.500198268890381,
+        "random_layer_dist_neuron_turned_off": [
+            4.434785842895508,
+            4.740480422973633,
+            4.686868190765381,
+            4.516507148742676,
+            4.288222312927246
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 4.533372783660889
+    },
+    "35": {
+        "nothing_turned_off": 6.371904373168945,
+        "nothing_turned_off_random_tokens": 3.0029587745666504,
+        "cluster_turned_off": 6.616786479949951,
+        "cluster_turned_off_random_tokens": 6.096822261810303,
+        "random_position_dist_neuron_turned_off": [
+            6.423110008239746,
+            6.363100051879883,
+            6.494482040405273,
+            6.585337162017822,
+            6.444556713104248
+        ],
+        "random_position_dist_neuron_turned_off_mean": 6.4621171951293945,
+        "random_neuron_turned_off": [
+            6.759583950042725,
+            6.758813381195068,
+            6.654690742492676,
+            6.707412242889404,
+            6.179932117462158
+        ],
+        "random_neuron_turned_off_mean": 6.612086486816406,
+        "random_layer_dist_neuron_turned_off": [
+            6.807137966156006,
+            6.701836109161377,
+            6.3913164138793945,
+            6.269381523132324,
+            6.67319917678833
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 6.568574237823486
+    },
+    "36": {
+        "nothing_turned_off": 21.65164739435369,
+        "nothing_turned_off_random_tokens": 2.7340481281280518,
+        "cluster_turned_off": 22.0324443470348,
+        "cluster_turned_off_random_tokens": 7.896885265003551,
+        "random_position_dist_neuron_turned_off": [
+            21.660711115056817,
+            21.886731234463777,
+            21.08052617853338,
+            21.306873668323863,
+            21.90898271040483
+        ],
+        "random_position_dist_neuron_turned_off_mean": 21.56876498135653,
+        "random_neuron_turned_off": [
+            21.532039295543324,
+            21.983915849165484,
+            21.387358231977984,
+            20.890182495117188,
+            21.94797862659801
+        ],
+        "random_neuron_turned_off_mean": 21.5482948996804,
+        "random_layer_dist_neuron_turned_off": [
+            22.31051219593395,
+            24.324779163707387,
+            22.585893110795453,
+            21.6181640625,
+            21.3085243918679
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 22.42957458496094
+    },
+    "37": {
+        "nothing_turned_off": 6.2562255859375,
+        "nothing_turned_off_random_tokens": 2.7017710208892822,
+        "cluster_turned_off": 6.332056522369385,
+        "cluster_turned_off_random_tokens": 5.505029678344727,
+        "random_position_dist_neuron_turned_off": [
+            6.294475078582764,
+            6.242130279541016,
+            6.213796138763428,
+            6.163240432739258,
+            6.406355857849121
+        ],
+        "random_position_dist_neuron_turned_off_mean": 6.263999557495117,
+        "random_neuron_turned_off": [
+            6.737759590148926,
+            6.404031753540039,
+            6.88999080657959,
+            6.719226360321045,
+            6.3069353103637695
+        ],
+        "random_neuron_turned_off_mean": 6.611588764190674,
+        "random_layer_dist_neuron_turned_off": [
+            6.267247676849365,
+            6.1920576095581055,
+            6.289875507354736,
+            6.656177997589111,
+            6.699317932128906
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 6.420935344696045
+    },
+    "38": {
+        "nothing_turned_off": 24.430683898925782,
+        "nothing_turned_off_random_tokens": 2.153477907180786,
+        "cluster_turned_off": 25.82122802734375,
+        "cluster_turned_off_random_tokens": 13.609599304199218,
+        "random_position_dist_neuron_turned_off": [
+            25.21831359863281,
+            25.819906616210936,
+            25.22466125488281,
+            25.398666381835938,
+            24.30866241455078
+        ],
+        "random_position_dist_neuron_turned_off_mean": 25.194042053222653,
+        "random_neuron_turned_off": [
+            26.789761352539063,
+            25.21208038330078,
+            28.483428955078125,
+            26.830337524414062,
+            25.731484985351564
+        ],
+        "random_neuron_turned_off_mean": 26.60941864013672,
+        "random_layer_dist_neuron_turned_off": [
+            25.625970458984376,
+            23.69123992919922,
+            26.066146850585938,
+            24.44503173828125,
+            23.470622253417968
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 24.659802246093754
+    },
+    "39": {
+        "nothing_turned_off": 3.893939733505249,
+        "nothing_turned_off_random_tokens": 1.2628003358840942,
+        "cluster_turned_off": 4.248459339141846,
+        "cluster_turned_off_random_tokens": 2.6054747104644775,
+        "random_position_dist_neuron_turned_off": [
+            4.101308822631836,
+            3.622642993927002,
+            4.174162864685059,
+            3.816863536834717,
+            3.9275853633880615
+        ],
+        "random_position_dist_neuron_turned_off_mean": 3.928512716293335,
+        "random_neuron_turned_off": [
+            4.567156791687012,
+            3.4116971492767334,
+            4.101014614105225,
+            4.068726539611816,
+            4.318498134613037
+        ],
+        "random_neuron_turned_off_mean": 4.0934186458587645,
+        "random_layer_dist_neuron_turned_off": [
+            4.20810079574585,
+            3.29931378364563,
+            3.8701717853546143,
+            3.8680193424224854,
+            3.752284049987793
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 3.7995779514312744
+    },
+    "40": {
+        "nothing_turned_off": 10.709487915039062,
+        "nothing_turned_off_random_tokens": 2.525819778442383,
+        "cluster_turned_off": 10.572385787963867,
+        "cluster_turned_off_random_tokens": 5.293655872344971,
+        "random_position_dist_neuron_turned_off": [
+            10.798487663269043,
+            10.607996940612793,
+            11.128273963928223,
+            10.876709938049316,
+            10.672439575195312
+        ],
+        "random_position_dist_neuron_turned_off_mean": 10.816781616210937,
+        "random_neuron_turned_off": [
+            11.0562162399292,
+            11.465725898742676,
+            10.869884490966797,
+            10.74722957611084,
+            10.57932186126709
+        ],
+        "random_neuron_turned_off_mean": 10.94367561340332,
+        "random_layer_dist_neuron_turned_off": [
+            14.33273983001709,
+            11.302745819091797,
+            10.852570533752441,
+            14.523815155029297,
+            11.38786792755127
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 12.47994785308838
+    },
+    "41": {
+        "nothing_turned_off": 7.839925289154053,
+        "nothing_turned_off_random_tokens": 3.1926941871643066,
+        "cluster_turned_off": 8.231769561767578,
+        "cluster_turned_off_random_tokens": 6.4858078956604,
+        "random_position_dist_neuron_turned_off": [
+            7.985727310180664,
+            7.984253883361816,
+            8.301703453063965,
+            7.930509090423584,
+            8.05567455291748
+        ],
+        "random_position_dist_neuron_turned_off_mean": 8.051573657989502,
+        "random_neuron_turned_off": [
+            7.892342567443848,
+            8.321362495422363,
+            8.109658241271973,
+            7.991322040557861,
+            8.517548561096191
+        ],
+        "random_neuron_turned_off_mean": 8.166446781158447,
+        "random_layer_dist_neuron_turned_off": [
+            8.01093864440918,
+            8.279561042785645,
+            8.474512100219727,
+            7.812585353851318,
+            7.854944705963135
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 8.0865083694458
+    },
+    "42": {
+        "nothing_turned_off": 11.805351844200722,
+        "nothing_turned_off_random_tokens": 2.094369411468506,
+        "cluster_turned_off": 12.362461970402645,
+        "cluster_turned_off_random_tokens": 5.083850567157452,
+        "random_position_dist_neuron_turned_off": [
+            12.23056851900541,
+            11.785332312950722,
+            11.629930936373198,
+            11.72481478177584,
+            11.957804753230167
+        ],
+        "random_position_dist_neuron_turned_off_mean": 11.865690260667069,
+        "random_neuron_turned_off": [
+            12.148077157827524,
+            12.071821946364183,
+            12.42759000338041,
+            11.874190110426683,
+            12.155380249023438
+        ],
+        "random_neuron_turned_off_mean": 12.135411893404447,
+        "random_layer_dist_neuron_turned_off": [
+            11.874711256760817,
+            11.813544640174278,
+            11.84384272648738,
+            11.755247849684496,
+            12.411185631385216
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 11.939706420898437
+    },
+    "43": {
+        "nothing_turned_off": 5.459826946258545,
+        "nothing_turned_off_random_tokens": 1.2508097887039185,
+        "cluster_turned_off": 5.620563983917236,
+        "cluster_turned_off_random_tokens": 2.6406185626983643,
+        "random_position_dist_neuron_turned_off": [
+            5.517695426940918,
+            5.53732967376709,
+            5.4420647621154785,
+            5.397648334503174,
+            5.663841724395752
+        ],
+        "random_position_dist_neuron_turned_off_mean": 5.511715984344482,
+        "random_neuron_turned_off": [
+            5.590881824493408,
+            5.3863630294799805,
+            5.493988513946533,
+            5.521978855133057,
+            5.576751708984375
+        ],
+        "random_neuron_turned_off_mean": 5.513992786407471,
+        "random_layer_dist_neuron_turned_off": [
+            5.508073329925537,
+            5.790288925170898,
+            5.344875812530518,
+            5.393889427185059,
+            6.27918004989624
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 5.66326150894165
+    },
+    "44": {
+        "nothing_turned_off": 6.622575759887695,
+        "nothing_turned_off_random_tokens": 2.905107021331787,
+        "cluster_turned_off": 6.708324432373047,
+        "cluster_turned_off_random_tokens": 5.818893909454346,
+        "random_position_dist_neuron_turned_off": [
+            6.5555877685546875,
+            6.858780384063721,
+            6.7663164138793945,
+            6.628164768218994,
+            6.471617221832275
+        ],
+        "random_position_dist_neuron_turned_off_mean": 6.656093311309815,
+        "random_neuron_turned_off": [
+            6.704810619354248,
+            6.87125825881958,
+            6.543169975280762,
+            6.866939067840576,
+            7.032020568847656
+        ],
+        "random_neuron_turned_off_mean": 6.803639698028564,
+        "random_layer_dist_neuron_turned_off": [
+            7.098008632659912,
+            7.047983169555664,
+            6.791366100311279,
+            6.63463020324707,
+            6.899725914001465
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 6.8943428039550785
+    },
+    "45": {
+        "nothing_turned_off": 76.9305419921875,
+        "nothing_turned_off_random_tokens": 1.282647967338562,
+        "cluster_turned_off": 78.98313903808594,
+        "cluster_turned_off_random_tokens": 19.4372501373291,
+        "random_position_dist_neuron_turned_off": [
+            85.80596160888672,
+            80.263671875,
+            78.52862548828125,
+            78.9659652709961,
+            74.84169006347656
+        ],
+        "random_position_dist_neuron_turned_off_mean": 79.68118286132812,
+        "random_neuron_turned_off": [
+            80.81598663330078,
+            75.95353698730469,
+            86.60191345214844,
+            76.71887969970703,
+            74.62520599365234
+        ],
+        "random_neuron_turned_off_mean": 78.94310455322265,
+        "random_layer_dist_neuron_turned_off": [
+            75.58531951904297,
+            77.42504119873047,
+            74.63187408447266,
+            81.46733093261719,
+            82.6076889038086
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 78.34345092773438
+    },
+    "46": {
+        "nothing_turned_off": 13.322190284729004,
+        "nothing_turned_off_random_tokens": 1.9086214303970337,
+        "cluster_turned_off": 13.668961524963379,
+        "cluster_turned_off_random_tokens": 3.9132564067840576,
+        "random_position_dist_neuron_turned_off": [
+            13.204410552978516,
+            12.849642753601074,
+            12.775142669677734,
+            13.17159652709961,
+            13.136153221130371
+        ],
+        "random_position_dist_neuron_turned_off_mean": 13.02738914489746,
+        "random_neuron_turned_off": [
+            13.34289836883545,
+            13.236587524414062,
+            13.623442649841309,
+            13.633831024169922,
+            13.310919761657715
+        ],
+        "random_neuron_turned_off_mean": 13.429535865783691,
+        "random_layer_dist_neuron_turned_off": [
+            12.370380401611328,
+            12.946102142333984,
+            14.042376518249512,
+            13.947790145874023,
+            12.966063499450684
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 13.254542541503906
+    },
+    "48": {
+        "nothing_turned_off": 9.199872970581055,
+        "nothing_turned_off_random_tokens": 3.318098306655884,
+        "cluster_turned_off": 9.301993370056152,
+        "cluster_turned_off_random_tokens": 6.530076503753662,
+        "random_position_dist_neuron_turned_off": [
+            9.446511268615723,
+            9.260011672973633,
+            9.268245697021484,
+            9.71112060546875,
+            9.187183380126953
+        ],
+        "random_position_dist_neuron_turned_off_mean": 9.37461452484131,
+        "random_neuron_turned_off": [
+            9.534253120422363,
+            9.170461654663086,
+            9.178627014160156,
+            9.354292869567871,
+            9.41592025756836
+        ],
+        "random_neuron_turned_off_mean": 9.330710983276367,
+        "random_layer_dist_neuron_turned_off": [
+            9.619088172912598,
+            9.109562873840332,
+            9.055451393127441,
+            9.289506912231445,
+            9.574875831604004
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 9.329697036743164
+    },
+    "49": {
+        "nothing_turned_off": 10.450522422790527,
+        "nothing_turned_off_random_tokens": 2.4190802574157715,
+        "cluster_turned_off": 10.453131675720215,
+        "cluster_turned_off_random_tokens": 4.936086654663086,
+        "random_position_dist_neuron_turned_off": [
+            10.429792404174805,
+            10.96764087677002,
+            10.343047142028809,
+            10.492725372314453,
+            10.300740242004395
+        ],
+        "random_position_dist_neuron_turned_off_mean": 10.506789207458496,
+        "random_neuron_turned_off": [
+            10.863966941833496,
+            10.30812931060791,
+            10.472098350524902,
+            10.552002906799316,
+            10.389432907104492
+        ],
+        "random_neuron_turned_off_mean": 10.517126083374023,
+        "random_layer_dist_neuron_turned_off": [
+            10.014400482177734,
+            9.80174732208252,
+            9.658106803894043,
+            9.87725830078125,
+            10.23564624786377
+        ],
+        "random_layer_dist_neuron_turned_off_mean": 9.917431831359863
+    }
+}
