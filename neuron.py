@@ -76,14 +76,19 @@ def filter_neuron_repr_with_token_count(min_count=50):
     token_ids_to_keep = [idx for idx in token_ids_to_keep if idx not in [0, 101, 102]]
     print('token_ids_to_keep: ', len(token_ids_to_keep))
 
-    for i in range(NUM_LAYERS):
+    # save token_ids_to_keep to file
+    with open(f'{NEURON_REPR_DIR}/token_ids_to_keep.json', 'w') as f:
+        json.dump(token_ids_to_keep, f)
+
+    for i in tqdm(range(NUM_LAYERS)):
         with open(f'{NEURON_REPR_DIR}/neuron_repr_{i}.json', 'r') as f:
             neuron_repr = json.load(f)
         neuron_repr = [neuron_repr[idx] for idx in token_ids_to_keep]
         with open(f'{NEURON_REPR_DIR}/neuron_repr_{i}_filtered.json', 'w') as f:
             json.dump(neuron_repr, f)
 
-    # vocab size for min_count=10: 6693
+    # yelp vocab size for min_count=10: 6693
+    # c4 vocab size for min_count=400: 15298
 
 
 def augment_neuron_repr_with_token_similarity(tokenizer, topk_neigh=5, score_discount=0.5):
@@ -95,35 +100,36 @@ def augment_neuron_repr_with_token_similarity(tokenizer, topk_neigh=5, score_dis
     vocab = tokenizer.get_vocab()  # token to id dict
     # load neuron representations
     all_layer_repr = load_and_mask_neuron_repr()  # (all_num_neurons, vocab_size)
-    # for each token in the vocab, find the topk most similar tokens by fasttext and their similarity scores
+    with open(f'{NEURON_REPR_DIR}/token_ids_to_keep.json', 'r') as f:
+        token_ids_kept = json.load(f)
+
     all_layer_repr_aug = all_layer_repr.clone()
-    for token_id in tqdm(range(all_layer_repr.size(1))):
+    for i, token_id in enumerate(tqdm(token_ids_kept)):
         # for each token in the vocab, find the topk most similar tokens by fasttext and their similarity scores
         token = tokenizer.convert_ids_to_tokens(token_id)
         neighbors = ft.get_nearest_neighbors(token)
         selected_neighbor_indices = []
         selected_neighbor_scores = []
         for (score, neigh) in neighbors:
-            if neigh in vocab:
-                selected_neighbor_indices.append(vocab[neigh])
+            if neigh in vocab and vocab[neigh] in token_ids_kept:
+                selected_neighbor_indices.append(token_ids_kept.index(vocab[neigh]))
                 selected_neighbor_scores.append(score * score_discount)
             if len(selected_neighbor_indices) == topk_neigh:
                 break
         # print(token, selected_neighbor_indices)
         # add the similarity_score * activation of each of the topk neighbor tokens to the current neuron representation
-        all_layer_repr_aug[:, token_id] += torch.sum(all_layer_repr[:, selected_neighbor_indices] * torch.tensor(selected_neighbor_scores).unsqueeze(0), dim=1)
+        all_layer_repr_aug[:, i] += torch.sum(all_layer_repr[:, selected_neighbor_indices] * torch.tensor(selected_neighbor_scores).unsqueeze(0), dim=1)
 
     # save the augmented neuron representations to file
     save_path = os.path.join(NEURON_REPR_DIR, 'neuron_repr_augmented.json')
-    if not os.path.exists(NEURON_REPR_DIR):
-        os.makedirs(NEURON_REPR_DIR)
+
     all_layer_repr_aug = all_layer_repr_aug.tolist()
     with open(save_path, 'w') as f:
         json.dump(all_layer_repr_aug, f)
 
 
 
-def main():
+def main(token_count_only=False):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(device)
     tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
@@ -142,11 +148,12 @@ def main():
     print("Dataset loaded")
 
     print("Start computing neuron representations")
-    get_neuron_representations(model, tokenizer, config, dataset, device, token_count_only=True)
+    get_neuron_representations(model, tokenizer, config, dataset, device, token_count_only=token_count_only)
 
 
 if __name__ == "__main__":
-    # main()
-    filter_neuron_repr_with_token_count(min_count=10)
-    # tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
-    # augment_neuron_repr_with_token_similarity(tokenizer, topk_neigh=5, score_discount=0.5)
+    # main(token_count_only=True)
+    # filter_neuron_repr_with_token_count(min_count=400)
+
+    tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+    augment_neuron_repr_with_token_similarity(tokenizer, topk_neigh=5, score_discount=0.5)
