@@ -1,7 +1,8 @@
 NUM_LAYERS = 13
 BATCH_SIZE = 64
 HIDDEN_DIM = 768
-DATASET = "c4"
+VOCAB_SIZE = 30522
+DATASET = "yelp"
 CLUSTER_OUTPUT_DIR = f'{DATASET}/cluster_outputs'
 VISUALIZATION_DIR = f'{DATASET}/visualizations'
 NEURON_REPR_DIR = f'{DATASET}/neuron_repr'
