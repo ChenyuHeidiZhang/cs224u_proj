@@ -8,6 +8,7 @@ from tqdm import tqdm
 from collections import defaultdict
 from transformers import AutoTokenizer
 from datasets import load_dataset
+import json
 
 
 def load_dataset_from_hf(dev=False):
@@ -81,7 +82,7 @@ def select_sentences_with_tokens(corpus, top_tokens, tokenizer=None, size=100):
     if not tokenizer:
         tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
     # sample 10k sentences from corpus
-    sampled_corpus = random.sample(corpus, min(20000, len(corpus)))
+    sampled_corpus = random.sample(corpus, min(100000, len(corpus)))
     sentences = []
     for sentence in tqdm(sampled_corpus):
         tokenized_sentence = tokenizer.tokenize(sentence)
@@ -96,6 +97,26 @@ def select_sentences_with_tokens(corpus, top_tokens, tokenizer=None, size=100):
         print(f"Warning: the corpus is too small to sample {size} sentences: {len(sentences)} sentences are sampled)")
     sentences = random.sample(sentences, min(size, len(sentences)))
     return sentences
+
+def select_sentences_for_all_clusters(corpus, cluster_to_tokens, tokenizer=None, size=100):
+    if not tokenizer:
+        tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+    clusters_to_sentences = defaultdict(list)
+    sampled_corpus = random.sample(corpus, min(100000, len(corpus)))
+    sentences = []
+    for sentence in tqdm(sampled_corpus):
+        tokenized_sentence = tokenizer.tokenize(sentence)
+        if len(tokenized_sentence) > 100:
+            continue
+        for cluster_id, tokens in cluster_to_tokens.items():
+            if len(clusters_to_sentences[cluster_id]) >= size:
+                continue
+            for token in tokens:
+                if token in tokenized_sentence:
+                    # print(f"Found a sentence containing {token}:", tokenized_sentence)
+                    clusters_to_sentences[cluster_id].append(sentence)
+    return clusters_to_sentences
+
 
 def read_top_activating_tokens(filename):
     cluster_to_tokens = {}

@@ -1,6 +1,7 @@
 from tqdm import tqdm
 import numpy as np
 import os
+import json
 import torch
 from torch.nn import CrossEntropyLoss
 from transformers import AutoTokenizer, BertModel, BertConfig, BertForPreTraining, BertForMaskedLM
@@ -58,7 +59,7 @@ def prepare_inputs_and_labels(batch, top_tokens, tokenizer, config, device, mask
     labels[~masked_indices] = -100
     return input_ids, attention_mask, labels
 
-def model_forward_cluster_turned_off(model, config, input_ids, attention_mask, labels, layer_indices, device, random=False, deactivate_strategy="zero"):
+def model_forward_cluster_turned_off(model, config, input_ids, attention_mask, labels, layer_indices, device, random=False, random_strategy="layer", deactivate_strategy="zero"):
     """
     Args:
         model: BertForMaskedLM
@@ -69,6 +70,7 @@ def model_forward_cluster_turned_off(model, config, input_ids, attention_mask, l
         layer_indices: dict, key is layer id, value is a list of neuron indices in that cluster
         device: torch.device
         random: whether to randomly turn off neurons in the cluster based on the same layer distribution of that cluster
+        random_strategy: "layer" or "position"
         deactivate_strategy: "zero" or "mean" of hidden state for an example when deactivating neurons in a cluster
     """
     # define MLM loss function
@@ -76,11 +78,22 @@ def model_forward_cluster_turned_off(model, config, input_ids, attention_mask, l
 
     extended_attention_mask = model.get_extended_attention_mask(attention_mask, input_ids.size()).to(device)
     hidden_states= model.bert.embeddings(input_ids=input_ids)
+
+    # get total number of neurons in the cluster
+    num_neurons = sum([len(layer_indices[layer_id]) for layer_id in layer_indices])
+    # get average number of neurons per layer
+    average_num_neurons_per_layer = num_neurons // NUM_LAYERS
+    # random select average_num_neurons_per_layer neurons from the range of 0 to HIDDEN_DIM
+    positions = torch.randperm(HIDDEN_DIM)[:average_num_neurons_per_layer].tolist()
+    
     if random:
-        # randomly select neurons to turn off, the number of neurons to turn off in each layer is the same as the number of neurons in the cluster in each layer
-        num_neurons_to_turn_off = len(layer_indices[0])
-        neuron_indices = torch.randperm(HIDDEN_DIM)[:num_neurons_to_turn_off].tolist()
-        hidden_states[:, :, neuron_indices] = 0 if deactivate_strategy == "zero" else torch.mean(hidden_states, dim=2, keepdim=True)[:, :, 0][:, :, None]
+        if random_strategy=="layer":
+            # randomly select neurons to turn off, the number of neurons to turn off in each layer is the same as the number of neurons in the cluster in each layer
+            num_neurons_to_turn_off = len(layer_indices[0])
+            neuron_indices = torch.randperm(HIDDEN_DIM)[:num_neurons_to_turn_off].tolist()
+            hidden_states[:, :, neuron_indices] = 0 if deactivate_strategy == "zero" else torch.mean(hidden_states, dim=2, keepdim=True)[:, :, 0][:, :, None]
+        elif random_strategy=="position":
+            hidden_states[:, :, positions] = 0 if deactivate_strategy == "zero" else torch.mean(hidden_states, dim=2, keepdim=True)[:, :, 0][:, :, None]
     else:
         # set the activation of neurons in the embedding layer to 0
         hidden_states[:, :, layer_indices[0]] = 0 if deactivate_strategy == "zero" else torch.mean(hidden_states, dim=2, keepdim=True)[:, :, 0][:, :, None]
@@ -89,10 +102,13 @@ def model_forward_cluster_turned_off(model, config, input_ids, attention_mask, l
         # hidden_states has shape (batch_size, sequence_length, hidden_size)
         # for each neuron in the layer, set the activation to 0
         if random:
-            # randomly select neurons to turn off, the number of neurons to turn off in each layer is the same as the number of neurons in the cluster in each layer
-            num_neurons_to_turn_off = len(layer_indices[layer_id])
-            neuron_indices = torch.randperm(HIDDEN_DIM)[:num_neurons_to_turn_off].tolist()
-            hidden_states[:, :, neuron_indices] = 0 if deactivate_strategy == "zero" else torch.mean(hidden_states, dim=2, keepdim=True)[:, :, 0][:, :, None]
+            if random_strategy=="layer":
+                # randomly select neurons to turn off, the number of neurons to turn off in each layer is the same as the number of neurons in the cluster in each layer
+                num_neurons_to_turn_off = len(layer_indices[layer_id])
+                neuron_indices = torch.randperm(HIDDEN_DIM)[:num_neurons_to_turn_off].tolist()
+                hidden_states[:, :, neuron_indices] = 0 if deactivate_strategy == "zero" else torch.mean(hidden_states, dim=2, keepdim=True)[:, :, 0][:, :, None]
+            elif random_strategy=="position":
+                hidden_states[:, :, positions] = 0 if deactivate_strategy == "zero" else torch.mean(hidden_states, dim=2, keepdim=True)[:, :, 0][:, :, None]
         else:
             # print("set mean to: ", torch.mean(hidden_states, dim=2, keepdim=True)[:, :, 0][:, :, None].shape)
             hidden_states[:, :, layer_indices[layer_id]] = 0 if deactivate_strategy == "zero" else torch.mean(hidden_states, dim=2, keepdim=True)[:, :, 0][:, :, None]
@@ -137,6 +153,24 @@ def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top
     # load data
     dataset = utils.load_dataset_from_hf(dev=(DATASET=='yelp'))
 
+    # check if os.path.join(dir, 'cluster_id_to_evaluation_split.json') exists if exists ,load it
+    if os.path.exists(os.path.join(dir, 'cluster_id_to_evaluation_split.json')):
+        print("Start loading evaluation split for clusters")
+        with open(os.path.join(dir, 'cluster_id_to_evaluation_split.json'), 'r') as f:
+            cluster_to_evaluation_split = json.load(f)
+        print("Done loading evaluation split for clusters")
+    # if not, select evaluation split for clusters
+    else:
+        print("Start selecting evaluation split for clusters")
+        cluster_to_evaluation_split = utils.select_sentences_for_all_clusters(dataset, cluster_to_tokens, tokenizer=tokenizer, size=evaluation_size)
+        print("Done selecting evaluation split for clusters")
+
+        # write evaluation split to file
+        if not dir:
+            dir = f'{CLUSTER_OUTPUT_DIR}/n_clusters{num_clusters}_distance_threshold_{distance_threshold}/'
+        with open(os.path.join(dir, 'cluster_id_to_evaluation_split.json'), 'w') as f:
+            json.dump(cluster_to_evaluation_split, f)
+
     cluster_id_to_average_MLM_loss = {}
     # for each cluster, for neurons in that cluster, manually set the activation to 0
     for cluster_id in range(num_clusters):
@@ -156,13 +190,15 @@ def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top
         # get tokens & prepare evaluate data
         top_tokens = cluster_to_tokens[str(cluster_id)]
         print("top activating tokens: ", top_tokens)
-        evaluation_split = utils.select_sentences_with_tokens(dataset, top_tokens, size=evaluation_size)
+        # evaluation_split = utils.select_sentences_with_tokens(dataset, top_tokens, size=evaluation_size)
+        evaluation_split = cluster_to_evaluation_split[str(cluster_id)]
         print("done selecting sentences for evaluation")
         if len(evaluation_split) == 0:
             print("Warning: no sentence contains the tokens")
             continue
 
         average_MLM_loss = 0 # with cluster
+        average_MLM_loss_random_position_dist_lst = [0] * num_repeat # random neurons turned off following same position distribution
         average_MLM_loss_random_lst = [0] * num_repeat # random neurons turned off
         average_MLM_loss_random_layer_dist_lst = [0] * num_repeat # random neurons turned off following same layer distribution
         average_MLM_loss_cluster_turned_off = 0 # neurons in cluster turned off
@@ -182,6 +218,11 @@ def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top
                 masked_lm_loss_cluster_turned_off = model_forward_cluster_turned_off(model, config, input_ids, attention_mask, labels, layer_indices, device, deactivate_strategy=deactivate_strategy)
                 average_MLM_loss_cluster_turned_off += masked_lm_loss_cluster_turned_off.item()
 
+                # turn off neurons randomly following the same position distribution
+                for i in range(num_repeat):
+                    masked_lm_loss_random_position_dist = model_forward_cluster_turned_off(model, config, input_ids, attention_mask, labels, layer_indices, device, random=True, random_strategy="position", deactivate_strategy=deactivate_strategy)
+                    average_MLM_loss_random_position_dist_lst[i] += masked_lm_loss_random_position_dist.item()
+
                 # turn off random neurons
                 for i in range(num_repeat):
                     random_layer_indices = random_layer_indices_lst[i]
@@ -190,28 +231,39 @@ def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top
 
                 # turn off neurons randomly following same layer distribution
                 for i in range(num_repeat):
-                    masked_lm_loss_random_layer_dist = model_forward_cluster_turned_off(model, config, input_ids, attention_mask, labels, layer_indices, device, random=True, deactivate_strategy=deactivate_strategy)
+                    masked_lm_loss_random_layer_dist = model_forward_cluster_turned_off(model, config, input_ids, attention_mask, labels, layer_indices, device, random=True, random_strategy="layer", deactivate_strategy=deactivate_strategy)
                     average_MLM_loss_random_layer_dist_lst[i] += masked_lm_loss_random_layer_dist.item()
+
                 
         average_MLM_loss /= len(evaluation_split) / BATCH_SIZE
         average_MLM_loss_cluster_turned_off /= len(evaluation_split) / BATCH_SIZE
+        average_MLM_loss_random_position_dist_lst = [item / (len(evaluation_split) / BATCH_SIZE) for item in average_MLM_loss_random_position_dist_lst]
         average_MLM_loss_random_lst = [item / (len(evaluation_split) / BATCH_SIZE) for item in average_MLM_loss_random_lst]
         average_MLM_loss_random_layer_dist_lst = [item / (len(evaluation_split) / BATCH_SIZE) for item in average_MLM_loss_random_layer_dist_lst]
 
         cluster_id_to_average_MLM_loss[cluster_id] = {
             "nothing_turned_off": average_MLM_loss,
             "cluster_turned_off": average_MLM_loss_cluster_turned_off,
+            "random_position_dist_neuron_turned_off": average_MLM_loss_random_position_dist_lst,
+            "random_position_dist_neuron_turned_off_mean": np.mean(average_MLM_loss_random_position_dist_lst),
             "random_neuron_turned_off": average_MLM_loss_random_lst,
             "random_neuron_turned_off_mean": np.mean(average_MLM_loss_random_lst),
             "random_layer_dist_neuron_turned_off": average_MLM_loss_random_layer_dist_lst,
             "random_layer_dist_neuron_turned_off_mean": np.mean(average_MLM_loss_random_layer_dist_lst)
         }
-        print("Cluster {}: nothing_turned_off: {}, cluster_turned_off: {}, random_neuron_turned_off: {}, random_layer_dist_neuron_turned_off: {}".format(cluster_id, average_MLM_loss, average_MLM_loss_cluster_turned_off, average_MLM_loss_random_lst, average_MLM_loss_random_layer_dist_lst))
-    
+        print(f"Cluster {cluster_id}: nothing_turned_off: {average_MLM_loss}, cluster_turned_off: {average_MLM_loss_cluster_turned_off}, random_position_dist_neuron_turned_off: {average_MLM_loss_random_position_dist_lst}, random_neuron_turned_off: {average_MLM_loss_random_lst}, random_layer_dist_neuron_turned_off: {average_MLM_loss_random_layer_dist_lst}")
+
     # save cluster_id_to_average_MLM_loss to file
     utils.save_cluster_to_MLM_loss(cluster_id_to_average_MLM_loss, num_clusters, distance_threshold, deactivate_strategy=deactivate_strategy, dir=dir)
 
 
 if __name__ == "__main__":
-    evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = 'c4/cluster_outputs/n_clusters50_distance_threshold_None_tfidf_filter10k')
+    evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=32, deactivate_strategy="mean", dir = 'c4/cluster_outputs/n_clusters50_distance_threshold_None_tfidf_filter10k')
+    # evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=32, deactivate_strategy="mean", dir = 'c4/cluster_outputs/n_clusters50_distance_threshold_None')
 
+    # read os.path.join(dir, 'cluster_id_to_evaluation_split.json') to get cluster_to_evaluation_split
+    # with open('c4/cluster_outputs/n_clusters50_distance_threshold_None/cluster_id_to_evaluation_split.json', 'r') as f:
+    #     cluster_to_evaluation_split = json.load(f)
+    # # print out len of evaluation split for each cluster
+    # for cluster_id in range(50):
+    #     print(cluster_id, len(cluster_to_evaluation_split[str(cluster_id)]))
