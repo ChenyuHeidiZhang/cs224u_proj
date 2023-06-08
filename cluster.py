@@ -47,18 +47,25 @@ def filter_less_popular_tokens(all_layer_repr, k=10000):
     all_layer_repr[:, non_top_token_indices] = 0
     return all_layer_repr
 
-def find_dissimilarity_matrix(all_layer_repr):
+def find_dissimilarity_matrix(all_layer_repr, similarity_method= 'cosine'):
     # Normalize the input tensor
     print('Normalizing input tensor')
     # normalize each neuron's representation to be a unit vector
     input1_norm = torch.nn.functional.normalize(all_layer_repr, p=2, dim=1)
     input2_norm = input1_norm.clone()
 
-    # Compute the cosine similarity using matrix multiplication
-    # similarity is now a matrix of shape (N, N) containing pairwise cosine similarities
-    print('Computing cosine similarity')
-    similarity = torch.mm(input1_norm, input2_norm.t()).abs()
-    print('Done computing similarity matrix. Shape:', similarity.shape)
+    if similarity_method == 'cosine':
+        # Compute the cosine similarity using matrix multiplication
+        # similarity is now a matrix of shape (N, N) containing pairwise cosine similarities
+        print('Computing cosine similarity')
+        similarity = torch.mm(input1_norm, input2_norm.t()).abs()
+        print('Done computing similarity matrix. Shape:', similarity.shape)
+    elif similarity_method == 'pearson':
+        # compute the pearson correlation coefficient 
+        # the result should be a N * N matrix
+        similarity = torch.corrcoef(all_layer_repr)
+    else:
+        raise ValueError(f"Similarity method {similarity_method} is not supported")
 
     # Convert similarity to dissimilarity matrix
     dissimilarity = 1 - similarity
