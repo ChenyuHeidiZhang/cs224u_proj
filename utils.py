@@ -22,19 +22,19 @@ def load_dataset_from_hf(dev=False):
     print("Dataset loaded")
     return dataset
 
-def load_neuron_repr():
+def load_neuron_repr(filtered=True):
     print(f'Loading neuron representations from {NEURON_REPR_DIR}')
     neuron_representations_avg = {}
     for i in tqdm(range(NUM_LAYERS)):
-        with open(f'{NEURON_REPR_DIR}/neuron_repr_{i}.json', 'r') as f:
+        with open(f"{NEURON_REPR_DIR}/neuron_repr_{i}_{'filtered' if filtered else ''}.json", 'r') as f:
             neuron_representations_avg[i] = torch.tensor(json.load(f)).t()  # shape (vocab_size, num_neurons) -> (num_neurons, vocab_size); num_neurons is hidden_dim
 
     # concatenate all layers
     all_layer_repr = torch.cat([neuron_representations_avg[i] for i in range(NUM_LAYERS)], dim=0) # (num_layers * num_neurons, vocab_size)
     return all_layer_repr
 
-def load_and_mask_neuron_repr(threshold=1.5):
-    all_layer_repr = load_neuron_repr() # (num_layers * num_neurons, vocab_size)
+def load_and_mask_neuron_repr(threshold=1.5, filtered=True):
+    all_layer_repr = load_neuron_repr(filtered) # (num_layers * num_neurons, vocab_size)
     # set the neuron representation whose absolute value is smaller than the threshold to 0
     all_layer_repr[all_layer_repr.abs() < threshold] = 0
     print(f"Number of tokens that are non zero: {torch.nonzero(all_layer_repr).shape[0]}")

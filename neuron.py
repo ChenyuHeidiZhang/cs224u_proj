@@ -8,7 +8,7 @@ import fasttext.util
 from utils import load_dataset_from_hf, load_and_mask_neuron_repr
 from constants import *
 
-def get_neuron_representations(model, tokenizer, config, dataset, device):
+def get_neuron_representations(model, tokenizer, config, dataset, device, token_count_only=False):
     neuron_representations_sum = {}
     # the size of the representation for each neuron is VOCAB_SIZE
     for i in range(config.num_hidden_layers+1):
@@ -30,13 +30,29 @@ def get_neuron_representations(model, tokenizer, config, dataset, device):
             # print(input_ids_flatten.shape)
             tokens_count.index_add_(
                 dim=0, index=input_ids_flatten, source=torch.ones_like(input_ids_flatten, dtype=tokens_count.dtype, device=device))
-            outputs = model(input_ids, attention_mask=attention_mask)
-            hidden_states = outputs[2]
-            for idx, hidden_state in enumerate(hidden_states):
-                # hidden_states has shape (BATCH_SIZE, MAX_LENGTH, HIDDEN_SIZE)
-                neuron_representations_sum[idx].index_add_(
-                    dim=0, index=input_ids_flatten, source=hidden_state.flatten(start_dim=0, end_dim=1))
-                # print(hidden_state.flatten(start_dim=0, end_dim=1).shape)
+            if not token_count_only:
+                outputs = model(input_ids, attention_mask=attention_mask)
+                hidden_states = outputs[2]
+                for idx, hidden_state in enumerate(hidden_states):
+                    # hidden_states has shape (BATCH_SIZE, MAX_LENGTH, HIDDEN_SIZE)
+                    neuron_representations_sum[idx].index_add_(
+                        dim=0, index=input_ids_flatten, source=hidden_state.flatten(start_dim=0, end_dim=1))
+                    # print(hidden_state.flatten(start_dim=0, end_dim=1).shape)
+
+    # save token count to file
+    print('non-zero tokens count: ', torch.nonzero(tokens_count).shape)
+    print('mean tokens count: ', torch.mean(tokens_count))
+    print('median tokens count: ', torch.median(tokens_count))
+    print('max tokens count: ', torch.max(tokens_count))
+    print('std tokens count: ', torch.std(tokens_count))
+
+    if not os.path.exists(NEURON_REPR_DIR):
+        os.makedirs(NEURON_REPR_DIR)
+    tokens_count = tokens_count.cpu().tolist()
+    with open(f'{NEURON_REPR_DIR}/tokens_count.json', 'w') as f:
+        json.dump(tokens_count, f)
+    if token_count_only:
+        return None
 
     neuron_representations_avg = {}
     # the size of the representation for each neuron is VOCAB_SIZE
@@ -44,16 +60,30 @@ def get_neuron_representations(model, tokenizer, config, dataset, device):
         neuron_representations_avg[i] = neuron_representations_sum[i] / torch.clamp(tokens_count.unsqueeze(1), min=1) # avoid division by zero error
 
     # save neuron representations to file
-    if not os.path.exists(NEURON_REPR_DIR):
-        os.makedirs(NEURON_REPR_DIR)
     for i in range(config.num_hidden_layers+1):
         neuron_representations_avg[i] = neuron_representations_avg[i].cpu().tolist()
         with open(f'{NEURON_REPR_DIR}/neuron_repr_{i}.json', 'w') as f:
             json.dump(neuron_representations_avg[i], f)
 
-    print('non-zero tokens count: ', torch.nonzero(tokens_count).shape)
-
     return neuron_representations_avg
+
+
+def filter_neuron_repr_with_token_count(min_count=50):
+    with open(f'{NEURON_REPR_DIR}/tokens_count.json', 'r') as f:
+        tokens_count = json.load(f)
+    token_ids_to_keep = [idx for idx, count in enumerate(tokens_count) if count >= min_count]
+    # remove [PAD], [CLS], [SEP]
+    token_ids_to_keep = [idx for idx in token_ids_to_keep if idx not in [0, 101, 102]]
+    print('token_ids_to_keep: ', len(token_ids_to_keep))
+
+    for i in range(NUM_LAYERS):
+        with open(f'{NEURON_REPR_DIR}/neuron_repr_{i}.json', 'r') as f:
+            neuron_repr = json.load(f)
+        neuron_repr = [neuron_repr[idx] for idx in token_ids_to_keep]
+        with open(f'{NEURON_REPR_DIR}/neuron_repr_{i}_filtered.json', 'w') as f:
+            json.dump(neuron_repr, f)
+
+    # vocab size for min_count=10: 6693
 
 
 def augment_neuron_repr_with_token_similarity(tokenizer, topk_neigh=5, score_discount=0.5):
@@ -112,10 +142,11 @@ def main():
     print("Dataset loaded")
 
     print("Start computing neuron representations")
-    get_neuron_representations(model, tokenizer, config, dataset, device)
+    get_neuron_representations(model, tokenizer, config, dataset, device, token_count_only=True)
 
 
 if __name__ == "__main__":
     # main()
-    tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
-    augment_neuron_repr_with_token_similarity(tokenizer, topk_neigh=5, score_discount=0.5)
+    filter_neuron_repr_with_token_count(min_count=10)
+    # tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+    # augment_neuron_repr_with_token_similarity(tokenizer, topk_neigh=5, score_discount=0.5)
