@@ -89,7 +89,7 @@ def plot_cluster_top_tokens_neuron(cluster_id_to_top_token_indices, all_layer_re
         plt.savefig(os.path.join(dir, f"cluster_{cluster_id}_top_{num_top_tokens}_tokens.png"))
 
 
-def visualize_cluster_token_embeddings(folder_name, max_clusters_to_plot=5):
+def visualize_cluster_token_embeddings(folder_name, max_clusters_to_plot=5, num_tokens_per_cluster=10):
     # Load a FastText model
     # Note: You can download a pre-trained FastText model from https://dl.fbaipublicfiles.com/fasttext/vectors-crawl/
     fasttext.util.download_model('en', if_exists='ignore')  # English
@@ -98,7 +98,6 @@ def visualize_cluster_token_embeddings(folder_name, max_clusters_to_plot=5):
 
     plt.figure(figsize=(10, 10))
 
-    num_tokens_per_cluster = 10
     tokens_file = os.path.join(CLUSTER_OUTPUT_DIR, folder_name, f"top_{num_tokens_per_cluster}_tokens.txt")
     all_tokens = []
     embeddings_all = []

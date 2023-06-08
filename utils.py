@@ -11,14 +11,19 @@ from datasets import load_dataset
 
 
 def load_dataset_from_hf(dev=False):
-    if dev:
+    if DATASET == "yelp":
         yelp = load_dataset("yelp_review_full")
-        dataset = yelp["test"]["text"][:10000] # for development purpose, only use the first 10000 examples in yelp["test"]["text"]
-    else:
+        dataset = yelp["test"]["text"] # for development purpose, only use the first 10000 examples in yelp["test"]["text"]
+    elif DATASET == "c4":
         data_files = {"validation": "en/c4-validation.*.json.gz"}
         dataset = load_dataset("allenai/c4", data_files=data_files, split="validation")
         # dataset = load_dataset("c4", "en", split="validation")
         dataset = dataset["text"]  # Note: using all data
+    else:
+        raise ValueError("Invalid dataset name")
+
+    if dev:
+        dataset = dataset[:10000]
     print("Dataset loaded")
     return dataset
 
@@ -33,7 +38,7 @@ def load_neuron_repr(filtered=True):
     all_layer_repr = torch.cat([neuron_representations_avg[i] for i in range(NUM_LAYERS)], dim=0) # (num_layers * num_neurons, vocab_size)
     return all_layer_repr
 
-def load_and_mask_neuron_repr(threshold=1.5, filtered=True):
+def load_and_mask_neuron_repr(threshold=0.5, filtered=True):
     all_layer_repr = load_neuron_repr(filtered) # (num_layers * num_neurons, vocab_size)
     # set the neuron representation whose absolute value is smaller than the threshold to 0
     all_layer_repr[all_layer_repr.abs() < threshold] = 0

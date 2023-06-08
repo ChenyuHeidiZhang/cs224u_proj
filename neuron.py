@@ -117,8 +117,9 @@ def augment_neuron_repr_with_token_similarity(tokenizer, topk_neigh=5, score_dis
             if len(selected_neighbor_indices) == topk_neigh:
                 break
         # print(token, selected_neighbor_indices)
-        # add the similarity_score * activation of each of the topk neighbor tokens to the current neuron representation
-        all_layer_repr_aug[:, i] += torch.sum(all_layer_repr[:, selected_neighbor_indices] * torch.tensor(selected_neighbor_scores).unsqueeze(0), dim=1)
+        # add the average of similarity_score * activation of each of the topk neighbor tokens to the current neuron representation
+        if len(selected_neighbor_indices) > 0:
+            all_layer_repr_aug[:, i] += torch.mean(all_layer_repr[:, selected_neighbor_indices] * torch.tensor(selected_neighbor_scores).unsqueeze(0), dim=1)
 
     # save the augmented neuron representations to file
     save_path = os.path.join(NEURON_REPR_DIR, 'neuron_repr_augmented.json')
@@ -157,3 +158,12 @@ if __name__ == "__main__":
 
     tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
     augment_neuron_repr_with_token_similarity(tokenizer, topk_neigh=5, score_discount=0.5)
+
+
+    # # load neuron representations
+    # with open(f'{NEURON_REPR_DIR}/token_ids_to_keep.json', 'r') as f:
+    #     token_ids_kept = json.load(f)
+    
+    # # print kept vocab
+    # kept_vocab = tokenizer.convert_ids_to_tokens(token_ids_kept)
+    # print(kept_vocab)

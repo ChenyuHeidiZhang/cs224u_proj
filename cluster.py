@@ -72,11 +72,16 @@ def find_dissimilarity_matrix(all_layer_repr, similarity_method= 'cosine'):
     return dissimilarity
 
 
-def get_cluster_top_tokens(all_layer_repr, tokenizer, cluster_labels, num_clusters, distance_threshold, num_top_tokens):
+def get_cluster_top_tokens(all_layer_repr, tokenizer, cluster_labels, num_clusters, distance_threshold, num_top_tokens, token_filtered=False):
     dir = f'{CLUSTER_OUTPUT_DIR}/n_clusters{num_clusters}_distance_threshold_{distance_threshold}/'
     # dir = f'{CLUSTER_OUTPUT_DIR}/n_clusters{num_clusters}_threshold1/'
     if not os.path.exists(dir):
         os.makedirs(dir)
+
+    if token_filtered:
+        with open(f'{NEURON_REPR_DIR}/token_ids_to_keep.json', 'r') as f:
+            indices_to_token_ids = json.load(f)
+
     cluster_id_to_top_token_indices = {}
     # Find top-k tokens that are activated by neurons in the same cluster and write to a file
     with open(os.path.join(dir, f"top_{num_top_tokens}_tokens.txt"), 'w') as f:
@@ -85,10 +90,13 @@ def get_cluster_top_tokens(all_layer_repr, tokenizer, cluster_labels, num_cluste
             indices = np.where(cluster_labels == cluster_id)[0]
             # print(indices)
             # aggregate activations of neurons in the cluster
-            cluster_activations = torch.sum(all_layer_repr[indices], dim=0) # D
+            # TODO: check if abs() is better
+            cluster_activations = torch.sum(all_layer_repr[indices].abs(), dim=0) # D
             # find the indices of the top-k tokens
             top_k_indices = torch.topk(cluster_activations, k=num_top_tokens)[1]
             # convert indices to tokens
+            if token_filtered:
+                top_k_indices = [indices_to_token_ids[i] for i in top_k_indices]
             top_k_tokens = tokenizer.convert_ids_to_tokens(top_k_indices)
             print("Cluster {}: {}".format(cluster_id, top_k_tokens))
             f.write("Cluster {}: {}\n".format(cluster_id, top_k_tokens))
@@ -96,7 +104,7 @@ def get_cluster_top_tokens(all_layer_repr, tokenizer, cluster_labels, num_cluste
     return cluster_id_to_top_token_indices
 
 
-def compute_clusters(all_layer_repr, tokenizer, num_clusters=3, distance_threshold=None, num_top_tokens=10):
+def compute_clusters(all_layer_repr, tokenizer, num_clusters=3, distance_threshold=None, num_top_tokens=10, token_filtered=False):
     # input tensors all_layer_repr is of shape (N, D)
     # where N is the numbers of neurons (num_layers * num_neurons_per_layer = 9984), and D is the dimensionality (vocab size)
 
@@ -112,7 +120,7 @@ def compute_clusters(all_layer_repr, tokenizer, num_clusters=3, distance_thresho
     # print(cluster_labels)
 
     # Find top-k tokens that are activated by neurons in the same cluster and write to a file
-    cluster_id_to_top_token_indices = get_cluster_top_tokens(all_layer_repr, tokenizer, cluster_labels, num_clusters, distance_threshold, num_top_tokens)
+    cluster_id_to_top_token_indices = get_cluster_top_tokens(all_layer_repr, tokenizer, cluster_labels, num_clusters, distance_threshold, num_top_tokens, token_filtered=token_filtered)
 
     # plot the positions (layer and index) of neurons for each cluster label
     plot_cluster_neurons(cluster_labels, num_clusters, distance_threshold)
@@ -131,13 +139,17 @@ def explore_cluster_distance_thresholds(dissimilarity, thresholds):
 
 
 def run():
-    all_layer_repr = utils.load_neuron_repr()
-    all_layer_repr = filter_less_popular_tokens(all_layer_repr, k=10000)
-    all_layer_repr = find_tf_idf_neuron_repr(all_layer_repr)
+    # all_layer_repr = utils.load_neuron_repr()
+    # all_layer_repr = filter_less_popular_tokens(all_layer_repr, k=10000)
+    # all_layer_repr = find_tf_idf_neuron_repr(all_layer_repr)
+    all_layer_repr = utils.load_augmented_neuron_repr()
+    # replace nan with 0
+    # all_layer_repr = torch.nan_to_num(all_layer_repr)
+
     tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
     # one of num_cluster and distance_threshold must be None
     # compute_clusters(all_layer_repr, tokenizer, num_clusters=20, distance_threshold=None, num_top_tokens=10)
-    compute_clusters(all_layer_repr, tokenizer, num_clusters=50, distance_threshold=None, num_top_tokens=10)
+    compute_clusters(all_layer_repr, tokenizer, num_clusters=50, distance_threshold=None, num_top_tokens=30, token_filtered=True)
     # compute_clusters(all_layer_repr, tokenizer, num_clusters=500, distance_threshold=None, num_top_tokens=10)
     # compute_clusters(all_layer_repr, tokenizer, num_clusters=None, distance_threshold=0.999, num_top_tokens=10)
 
@@ -145,4 +157,4 @@ def run():
 if __name__ == '__main__':
     run()
 
-    # visualize_cluster_token_embeddings(folder_name="n_clusters50_distance_threshold_None")
+    # visualize_cluster_token_embeddings(folder_name="n_clusters50_distance_threshold_None", num_tokens_per_cluster=30)
