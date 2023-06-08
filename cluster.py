@@ -31,6 +31,22 @@ def find_tf_idf_neuron_repr(all_layer_repr):
 
     return tfidf_matrix
 
+def filter_less_popular_tokens(all_layer_repr, k=10000):
+    """
+    turn off tokens that are not commonly activated by neurons
+    only keep top k
+    """
+    abs_all_layer_repr = torch.abs(all_layer_repr)
+    # calculate the sum for each token across all neurons
+    token_sum = torch.sum(abs_all_layer_repr, dim=0)
+    # select the top k indices
+    top_token_indices = torch.topk(token_sum, k=k)[1]
+    # get indices that do not belong to top_token_indices
+    non_top_token_indices = torch.nonzero(torch.sum(top_token_indices.unsqueeze(1) == torch.arange(VOCAB_SIZE).unsqueeze(0), dim=0) == 0).squeeze(1)
+    # set to 0
+    all_layer_repr[:, non_top_token_indices] = 0
+    return all_layer_repr
+
 def find_dissimilarity_matrix(all_layer_repr):
     # Normalize the input tensor
     print('Normalizing input tensor')
@@ -109,7 +125,7 @@ def explore_cluster_distance_thresholds(dissimilarity, thresholds):
 
 def run():
     all_layer_repr = utils.load_neuron_repr()
-    # all_layer_repr = utils.load_and_mask_neuron_repr(threshold=1)
+    all_layer_repr = filter_less_popular_tokens(all_layer_repr, k=10000)
     all_layer_repr = find_tf_idf_neuron_repr(all_layer_repr)
     tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
     # one of num_cluster and distance_threshold must be None
