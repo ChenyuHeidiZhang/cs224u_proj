@@ -67,17 +67,28 @@ def load_cluster(num_clusters, distance_threshold):
         clusters = json.load(f)
     return clusters
 
+def load_cluster_from_file(filename):
+    with open(filename, 'r') as f:
+        clusters = json.load(f)
+    return clusters
+
 def select_sentences_with_tokens(corpus, top_tokens, tokenizer=None, size=100):
     if not tokenizer:
         tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+    # sample 10k sentences from corpus
+    sampled_corpus = random.sample(corpus, min(20000, len(corpus)))
     sentences = []
-    for sentence in corpus:
+    for sentence in tqdm(sampled_corpus):
         tokenized_sentence = tokenizer.tokenize(sentence)
+        if len(tokenized_sentence) > 100: # skip sentences that are too long
+            continue
         for top_token in top_tokens:
             if top_token in tokenized_sentence:
                 sentences.append(sentence)
+        if len(sentences) >= size:
+            break
     if len(sentences) < size:
-        print(f"Warning: the corpus is too small to sample {size} sentences")
+        print(f"Warning: the corpus is too small to sample {size} sentences: {len(sentences)} sentences are sampled)")
     sentences = random.sample(sentences, min(size, len(sentences)))
     return sentences
 
@@ -109,8 +120,9 @@ def get_random_layer_indices(num_neurons_to_turn_off):
         random_layer_indices[layer_id].append(neuron_index % 768)
     return random_layer_indices
 
-def save_cluster_to_MLM_loss(cluster_id_to_MLM_loss, num_clusters, distance_threshold, deactivate_strategy="zero"):
-    dir = f'{CLUSTER_OUTPUT_DIR}/n_clusters{num_clusters}_distance_threshold_{distance_threshold}/'
+def save_cluster_to_MLM_loss(cluster_id_to_MLM_loss, num_clusters, distance_threshold, deactivate_strategy="zero", dir=None):
+    if not dir:
+        dir = f'{CLUSTER_OUTPUT_DIR}/n_clusters{num_clusters}_distance_threshold_{distance_threshold}/'
     if not os.path.exists(dir):
         os.makedirs(dir)
     with open(os.path.join(dir, f'deactivate_{deactivate_strategy}_cluster_id_to_average_MLM_loss.json'), 'w') as f:

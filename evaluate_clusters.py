@@ -1,5 +1,6 @@
 from tqdm import tqdm
 import numpy as np
+import os
 import torch
 from torch.nn import CrossEntropyLoss
 from transformers import AutoTokenizer, BertModel, BertConfig, BertForPreTraining, BertForMaskedLM
@@ -101,7 +102,7 @@ def model_forward_cluster_turned_off(model, config, input_ids, attention_mask, l
     masked_lm_loss = loss_fct(prediction_scores.view(-1, config.vocab_size), labels.view(-1))
     return masked_lm_loss
 
-def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top", mask_percentage=0.15, num_repeat=5, evaluation_size=96, deactivate_strategy="zero"):
+def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top", mask_percentage=0.15, num_repeat=5, evaluation_size=96, deactivate_strategy="zero", dir=None):
     '''
     Evaluate cluster using causal ablation.
 
@@ -115,9 +116,13 @@ def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top
         deactivate_strategy: "zero" or "mean" of hidden state for an example when deactivating neurons in a cluster
     '''
     # load neurons in each cluster
-    cluster_to_neurons = utils.load_cluster(num_clusters=num_clusters, distance_threshold=distance_threshold)
-    # load top activating tokens for each cluster
-    cluster_to_tokens = utils.read_top_activating_tokens(f"{CLUSTER_OUTPUT_DIR}/n_clusters{num_clusters}_distance_threshold_{distance_threshold}/top_10_tokens.txt")
+    if dir:
+        cluster_to_neurons = utils.load_cluster_from_file(os.path.join(dir, 'cluster_id_to_neurons.json'))
+        # load top activating tokens for each cluster
+        cluster_to_tokens = utils.read_top_activating_tokens(os.path.join(dir, 'top_10_tokens.txt'))
+    else:
+        cluster_to_neurons = utils.load_cluster(num_clusters=num_clusters, distance_threshold=distance_threshold)
+        cluster_to_tokens = utils.read_top_activating_tokens(f"{CLUSTER_OUTPUT_DIR}/n_clusters{num_clusters}_distance_threshold_{distance_threshold}_tfidf_filter10k/top_10_tokens.txt")
     print("Cluster loaded")
 
     # load model 
@@ -152,6 +157,7 @@ def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top
         top_tokens = cluster_to_tokens[str(cluster_id)]
         print("top activating tokens: ", top_tokens)
         evaluation_split = utils.select_sentences_with_tokens(dataset, top_tokens, size=evaluation_size)
+        print("done selecting sentences for evaluation")
         if len(evaluation_split) == 0:
             print("Warning: no sentence contains the tokens")
             continue
@@ -203,9 +209,9 @@ def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top
         print("Cluster {}: nothing_turned_off: {}, cluster_turned_off: {}, random_neuron_turned_off: {}, random_layer_dist_neuron_turned_off: {}".format(cluster_id, average_MLM_loss, average_MLM_loss_cluster_turned_off, average_MLM_loss_random_lst, average_MLM_loss_random_layer_dist_lst))
     
     # save cluster_id_to_average_MLM_loss to file
-    utils.save_cluster_to_MLM_loss(cluster_id_to_average_MLM_loss, num_clusters, distance_threshold, deactivate_strategy=deactivate_strategy)
+    utils.save_cluster_to_MLM_loss(cluster_id_to_average_MLM_loss, num_clusters, distance_threshold, deactivate_strategy=deactivate_strategy, dir=dir)
 
 
 if __name__ == "__main__":
-    evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean")
+    evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = 'c4/cluster_outputs/n_clusters50_distance_threshold_None_tfidf_filter10k')
 
