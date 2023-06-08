@@ -148,7 +148,7 @@ def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top
         cluster_to_tokens = utils.read_top_activating_tokens(os.path.join(dir, 'top_10_tokens.txt'))
     else:
         cluster_to_neurons = utils.load_cluster(num_clusters=num_clusters, distance_threshold=distance_threshold)
-        cluster_to_tokens = utils.read_top_activating_tokens(f"{CLUSTER_OUTPUT_DIR}/n_clusters{num_clusters}_distance_threshold_{distance_threshold}_tfidf_filter10k/top_10_tokens.txt")
+        cluster_to_tokens = utils.read_top_activating_tokens(f"{CLUSTER_OUTPUT_DIR}/n_clusters{num_clusters}_distance_threshold_{distance_threshold}/top_10_tokens.txt")
     print("Cluster loaded")
 
     # load model 
@@ -287,7 +287,8 @@ def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top
 
 
 if __name__ == "__main__":
-    evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=32, deactivate_strategy="mean", dir = 'c4/cluster_outputs/n_clusters50_distance_threshold_None_tfidf_filter10k')
+    # evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=32, deactivate_strategy="mean", dir = 'c4/cluster_outputs/n_clusters50_distance_threshold_None_tfidf_filter10k')
+    evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=32, deactivate_strategy="mean", dir = 'c4/cluster_outputs/n_clusters50_distance_threshold_None_tfidf')
     # evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=32, deactivate_strategy="mean", dir = 'c4/cluster_outputs/n_clusters50_distance_threshold_None')
 
 
