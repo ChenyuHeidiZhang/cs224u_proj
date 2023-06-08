@@ -12,19 +12,60 @@ from constants import *
 import utils
 from visualization import plot_cluster_neurons, plot_cluster_top_tokens_neuron, visualize_cluster_token_embeddings
 
+def find_tf_idf_neuron_repr(all_layer_repr):
+    # all_layer_repr is a tensor of shape N * D where N is the number of neurons and D is the dimensionality (vocab size)
+    # Compute the term frequency (TF) matrix
+    tf_matrix = all_layer_repr / torch.sum(all_layer_repr, dim=1, keepdim=True)
 
-def find_dissimilarity_matrix(all_layer_repr):
+    # Compute the document frequency (DF) vector
+    df_vector = torch.count_nonzero(tf_matrix, dim=0)
+
+    # Compute the inverse document frequency (IDF) vector
+    N = len(all_layer_repr)  # Total number of documents
+    idf_vector = torch.log(torch.tensor(N, dtype=torch.float32) / (df_vector + 1))
+
+    # Compute the TF-IDF matrix
+    tfidf_matrix = tf_matrix  * idf_vector
+
+    tfidf_matrix = torch.nan_to_num(tfidf_matrix, nan=0.0)
+
+    return tfidf_matrix
+
+def filter_less_popular_tokens(all_layer_repr, k=10000):
+    """
+    turn off tokens that are not commonly activated by neurons
+    only keep top k
+    """
+    abs_all_layer_repr = torch.abs(all_layer_repr)
+    # calculate the sum for each token across all neurons
+    token_sum = torch.sum(abs_all_layer_repr, dim=0)
+    # select the top k indices
+    top_token_indices = torch.topk(token_sum, k=k)[1]
+    # get indices that do not belong to top_token_indices
+    non_top_token_indices = torch.nonzero(torch.sum(top_token_indices.unsqueeze(1) == torch.arange(VOCAB_SIZE).unsqueeze(0), dim=0) == 0).squeeze(1)
+    # set to 0
+    all_layer_repr[:, non_top_token_indices] = 0
+    return all_layer_repr
+
+def find_dissimilarity_matrix(all_layer_repr, similarity_method= 'cosine'):
     # Normalize the input tensor
     print('Normalizing input tensor')
     # normalize each neuron's representation to be a unit vector
     input1_norm = torch.nn.functional.normalize(all_layer_repr, p=2, dim=1)
     input2_norm = input1_norm.clone()
 
-    # Compute the cosine similarity using matrix multiplication
-    # similarity is now a matrix of shape (N, N) containing pairwise cosine similarities
-    print('Computing cosine similarity')
-    similarity = torch.mm(input1_norm, input2_norm.t()).abs()
-    print('Done computing similarity matrix. Shape:', similarity.shape)
+    if similarity_method == 'cosine':
+        # Compute the cosine similarity using matrix multiplication
+        # similarity is now a matrix of shape (N, N) containing pairwise cosine similarities
+        print('Computing cosine similarity')
+        similarity = torch.mm(input1_norm, input2_norm.t()).abs()
+        print('Done computing similarity matrix. Shape:', similarity.shape)
+    elif similarity_method == 'pearson':
+        # compute the pearson correlation coefficient 
+        # the result should be a N * N matrix
+        similarity = torch.corrcoef(all_layer_repr)
+    else:
+        raise ValueError(f"Similarity method {similarity_method} is not supported")
 
     # Convert similarity to dissimilarity matrix
     dissimilarity = 1 - similarity
@@ -32,8 +73,8 @@ def find_dissimilarity_matrix(all_layer_repr):
 
 
 def get_cluster_top_tokens(all_layer_repr, tokenizer, cluster_labels, num_clusters, distance_threshold, num_top_tokens):
-    # dir = f'{CLUSTER_OUTPUT_DIR}/n_clusters{num_clusters}_distance_threshold_{distance_threshold}/'
-    dir = f'{CLUSTER_OUTPUT_DIR}/n_clusters{num_clusters}_threshold1/'
+    dir = f'{CLUSTER_OUTPUT_DIR}/n_clusters{num_clusters}_distance_threshold_{distance_threshold}/'
+    # dir = f'{CLUSTER_OUTPUT_DIR}/n_clusters{num_clusters}_threshold1/'
     if not os.path.exists(dir):
         os.makedirs(dir)
     cluster_id_to_top_token_indices = {}
@@ -90,8 +131,9 @@ def explore_cluster_distance_thresholds(dissimilarity, thresholds):
 
 
 def run():
-    # all_layer_repr = utils.load_neuron_repr()
-    all_layer_repr = utils.load_and_mask_neuron_repr(threshold=1)
+    all_layer_repr = utils.load_neuron_repr()
+    all_layer_repr = filter_less_popular_tokens(all_layer_repr, k=10000)
+    all_layer_repr = find_tf_idf_neuron_repr(all_layer_repr)
     tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
     # one of num_cluster and distance_threshold must be None
     # compute_clusters(all_layer_repr, tokenizer, num_clusters=20, distance_threshold=None, num_top_tokens=10)
