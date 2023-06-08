@@ -9,7 +9,7 @@ from transformers import AutoTokenizer, BertModel, BertConfig, BertForPreTrainin
 from constants import *
 import utils
 
-def prepare_inputs_and_labels(batch, top_tokens, tokenizer, config, device, mask_strategy="random", mask_percentage=0.15):
+def prepare_inputs_and_labels(batch, top_tokens, tokenizer, config, device, mask_strategy="random", mask_percentage=0.05):
     """
     Args:
         batch: list of sentences
@@ -29,19 +29,29 @@ def prepare_inputs_and_labels(batch, top_tokens, tokenizer, config, device, mask
                     return_tensors='pt', 
                     return_attention_mask=True)
     input_ids, attention_mask = temp["input_ids"].to(device), temp["attention_mask"].to(device) # shape: (batch_size, seq_len)
+    seq_len = input_ids.size(1)
     labels = input_ids.clone()
     # set [PAD] tokens to be -100
     labels[labels == tokenizer.pad_token_id] = -100
     if mask_strategy == "random":
+        # random mask percentage should match this mask top activating tokens
+        token_ids = tokenizer.convert_tokens_to_ids(top_tokens)
+        masked_indices = torch.zeros(input_ids.size(), dtype=torch.bool).to(device)
+        for token_id in token_ids:
+            masked_indices = masked_indices | (input_ids == token_id)
+        # count number of masked indices that is not zero
+        masked_count = torch.nonzero(masked_indices).size(0)
+        mask_percentage = masked_count / (input_ids.size(0) * input_ids.size(1))
+        print("mask_percentage: ", mask_percentage)
         # randomly mask 15% of the input tokens to be [MASK]
-        masked_indices = torch.bernoulli(torch.full(input_ids.size(), mask_percentage)).bool().to(device)
+        masked_indices = torch.bernoulli(torch.full(input_ids.size(), mask_percentage * 2)).bool().to(device)
         # only mask those tokens that are not [PAD], [CLS], or [SEP]
         masked_indices = masked_indices & (input_ids != tokenizer.pad_token_id) & (input_ids != tokenizer.cls_token_id) & (input_ids != tokenizer.sep_token_id)
         # count number of masked indices that is not zero
         # print("Number of masked tokens: ", torch.nonzero(masked_indices).size(0))
         input_ids[masked_indices] = tokenizer.mask_token_id
+        print("non zero masked indices: ", torch.nonzero(masked_indices).size(0))
     elif mask_strategy == "top":
-        # TODO: the percentage of tokens being masked is far lower than 15%, maybe should random mask percentage should match this
         # mask top activating tokens
         token_ids = tokenizer.convert_tokens_to_ids(top_tokens)
         masked_indices = torch.zeros(input_ids.size(), dtype=torch.bool).to(device)
@@ -53,7 +63,7 @@ def prepare_inputs_and_labels(batch, top_tokens, tokenizer, config, device, mask
     else:
         raise ValueError("mask_strategy must be either 'random' or 'top'")
     # confirm that input_ids is different from labels
-    assert not torch.equal(input_ids, labels)
+    # assert not torch.equal(input_ids, labels)
     # MLM loss should ignore indices other than the masked indices
     # set labels to -100 (ignore index) except the masked indices
     labels[~masked_indices] = -100
@@ -169,7 +179,7 @@ def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top
         if not dir:
             dir = f'{CLUSTER_OUTPUT_DIR}/n_clusters{num_clusters}_distance_threshold_{distance_threshold}/'
         with open(os.path.join(dir, 'cluster_id_to_evaluation_split.json'), 'w') as f:
-            json.dump(cluster_to_evaluation_split, f)
+            json.dump(cluster_to_evaluation_split, f, indent=4)
 
     cluster_id_to_average_MLM_loss = {}
     # for each cluster, for neurons in that cluster, manually set the activation to 0
@@ -197,26 +207,42 @@ def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top
             print("Warning: no sentence contains the tokens")
             continue
 
-        average_MLM_loss = 0 # with cluster
+        average_MLM_loss = 0 # with cluster, predict top activating tokens
+        average_MLM_loss_random_tokens = 0 # with_cluster, predict random tokens
         average_MLM_loss_random_position_dist_lst = [0] * num_repeat # random neurons turned off following same position distribution
         average_MLM_loss_random_lst = [0] * num_repeat # random neurons turned off
         average_MLM_loss_random_layer_dist_lst = [0] * num_repeat # random neurons turned off following same layer distribution
         average_MLM_loss_cluster_turned_off = 0 # neurons in cluster turned off
+        average_MLM_loss_cluster_turned_off_random_tokens = 0 # neurons in cluster turned off, random tokens turned off
         with torch.no_grad():
             for start_index in tqdm(range(0, len(evaluation_split), BATCH_SIZE)):
                 batch = evaluation_split[start_index: start_index+BATCH_SIZE]
 
-                # prepare inputs and labels
+                # prepare inputs and labels that masks top activating tokens
                 input_ids, attention_mask, labels = prepare_inputs_and_labels(batch, top_tokens, tokenizer, config, device, mask_strategy=mask_strategy, mask_percentage=mask_percentage)
 
-                # do not turn off neurons
+                # prepare inputs and labels that masks random tokens
+                random_mask_input_ids, random_mask_attention_mask, random_mask_labels = prepare_inputs_and_labels(batch, top_tokens, tokenizer, config, device, mask_strategy="random", mask_percentage=0.05)
+
+                # do not turn off neurons: predict top activating tokens
                 outputs = model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
                 masked_lm_loss = outputs.loss
                 average_MLM_loss += masked_lm_loss.item()
 
-                # turn off neurons in cluster
+                # do not turn off neurons: predict random tokens
+                outputs = model(input_ids=random_mask_input_ids, attention_mask=random_mask_attention_mask, labels=random_mask_labels)
+                masked_lm_loss_random_tokens = outputs.loss
+                average_MLM_loss_random_tokens += masked_lm_loss_random_tokens.item()
+
+
+                # turn off neurons in cluster: predict top activating tokens
                 masked_lm_loss_cluster_turned_off = model_forward_cluster_turned_off(model, config, input_ids, attention_mask, labels, layer_indices, device, deactivate_strategy=deactivate_strategy)
                 average_MLM_loss_cluster_turned_off += masked_lm_loss_cluster_turned_off.item()
+
+                # # turn off neurons in cluster: predict random tokens 
+                masked_lm_loss_cluster_turned_off_random_tokens = model_forward_cluster_turned_off(model, config, random_mask_input_ids, random_mask_attention_mask, random_mask_labels, layer_indices, device, deactivate_strategy=deactivate_strategy)
+                average_MLM_loss_cluster_turned_off_random_tokens += masked_lm_loss_cluster_turned_off_random_tokens.item()
+
 
                 # turn off neurons randomly following the same position distribution
                 for i in range(num_repeat):
@@ -237,13 +263,16 @@ def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top
                 
         average_MLM_loss /= len(evaluation_split) / BATCH_SIZE
         average_MLM_loss_cluster_turned_off /= len(evaluation_split) / BATCH_SIZE
+        average_MLM_loss_cluster_turned_off_random_tokens /= len(evaluation_split) / BATCH_SIZE
         average_MLM_loss_random_position_dist_lst = [item / (len(evaluation_split) / BATCH_SIZE) for item in average_MLM_loss_random_position_dist_lst]
         average_MLM_loss_random_lst = [item / (len(evaluation_split) / BATCH_SIZE) for item in average_MLM_loss_random_lst]
         average_MLM_loss_random_layer_dist_lst = [item / (len(evaluation_split) / BATCH_SIZE) for item in average_MLM_loss_random_layer_dist_lst]
 
         cluster_id_to_average_MLM_loss[cluster_id] = {
             "nothing_turned_off": average_MLM_loss,
+            "nothing_turned_off_random_tokens": average_MLM_loss_random_tokens,
             "cluster_turned_off": average_MLM_loss_cluster_turned_off,
+            "cluster_turned_off_random_tokens": average_MLM_loss_cluster_turned_off_random_tokens,
             "random_position_dist_neuron_turned_off": average_MLM_loss_random_position_dist_lst,
             "random_position_dist_neuron_turned_off_mean": np.mean(average_MLM_loss_random_position_dist_lst),
             "random_neuron_turned_off": average_MLM_loss_random_lst,
@@ -251,7 +280,7 @@ def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top
             "random_layer_dist_neuron_turned_off": average_MLM_loss_random_layer_dist_lst,
             "random_layer_dist_neuron_turned_off_mean": np.mean(average_MLM_loss_random_layer_dist_lst)
         }
-        print(f"Cluster {cluster_id}: nothing_turned_off: {average_MLM_loss}, cluster_turned_off: {average_MLM_loss_cluster_turned_off}, random_position_dist_neuron_turned_off: {average_MLM_loss_random_position_dist_lst}, random_neuron_turned_off: {average_MLM_loss_random_lst}, random_layer_dist_neuron_turned_off: {average_MLM_loss_random_layer_dist_lst}")
+        print(f"Cluster {cluster_id}: nothing_turned_off: {average_MLM_loss}, nothing_turned_off_random_tokens: {average_MLM_loss_random_tokens}, cluster_turned_off: {average_MLM_loss_cluster_turned_off}, cluster_turned_off_random_tokens: {average_MLM_loss_cluster_turned_off_random_tokens}, random_position_dist_neuron_turned_off: {average_MLM_loss_random_position_dist_lst}, random_neuron_turned_off: {average_MLM_loss_random_lst}, random_layer_dist_neuron_turned_off: {average_MLM_loss_random_layer_dist_lst}")
 
     # save cluster_id_to_average_MLM_loss to file
     utils.save_cluster_to_MLM_loss(cluster_id_to_average_MLM_loss, num_clusters, distance_threshold, deactivate_strategy=deactivate_strategy, dir=dir)
@@ -261,8 +290,8 @@ if __name__ == "__main__":
     evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=32, deactivate_strategy="mean", dir = 'c4/cluster_outputs/n_clusters50_distance_threshold_None_tfidf_filter10k')
     # evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=32, deactivate_strategy="mean", dir = 'c4/cluster_outputs/n_clusters50_distance_threshold_None')
 
-    # read os.path.join(dir, 'cluster_id_to_evaluation_split.json') to get cluster_to_evaluation_split
-    # with open('c4/cluster_outputs/n_clusters50_distance_threshold_None/cluster_id_to_evaluation_split.json', 'r') as f:
+
+    # with open('c4/cluster_outputs/n_clusters50_distance_threshold_None_tfidf_filter10k/cluster_id_to_evaluation_split.json', 'r') as f:
     #     cluster_to_evaluation_split = json.load(f)
     # # print out len of evaluation split for each cluster
     # for cluster_id in range(50):
