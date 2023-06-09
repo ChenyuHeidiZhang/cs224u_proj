@@ -123,7 +123,7 @@ def compute_clusters(all_layer_repr, tokenizer, num_clusters=3, distance_thresho
     cluster_id_to_top_token_indices = get_cluster_top_tokens(all_layer_repr, tokenizer, cluster_labels, num_clusters, distance_threshold, num_top_tokens, token_filtered=token_filtered)
 
     # plot the positions (layer and index) of neurons for each cluster label
-    plot_cluster_neurons(cluster_labels, num_clusters, distance_threshold)
+    # plot_cluster_neurons(cluster_labels, num_clusters, distance_threshold)
 
     # TODO: this should really be done across clusters, not within clusters, to show that the clusters are well-separated
     # plot the top tokens for each cluster with their representations
@@ -139,9 +139,9 @@ def explore_cluster_distance_thresholds(dissimilarity, thresholds):
 
 
 def run():
-    # all_layer_repr = utils.load_neuron_repr()
+    all_layer_repr = utils.load_neuron_repr(filtered=True)
     # all_layer_repr = filter_less_popular_tokens(all_layer_repr, k=10000)
-    all_layer_repr = utils.load_augmented_neuron_repr()
+    # all_layer_repr = utils.load_augmented_neuron_repr()
     # all_layer_repr = find_tf_idf_neuron_repr(all_layer_repr)
     # replace nan with 0
     # all_layer_repr = torch.nan_to_num(all_layer_repr)
@@ -149,9 +149,11 @@ def run():
     tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
     # one of num_cluster and distance_threshold must be None
     # compute_clusters(all_layer_repr, tokenizer, num_clusters=20, distance_threshold=None, num_top_tokens=10)
-    compute_clusters(all_layer_repr, tokenizer, num_clusters=50, distance_threshold=None, num_top_tokens=30, token_filtered=True)
+    # compute_clusters(all_layer_repr, tokenizer, num_clusters=50, distance_threshold=None, num_top_tokens=30, token_filtered=True)
     # compute_clusters(all_layer_repr, tokenizer, num_clusters=500, distance_threshold=None, num_top_tokens=10)
     # compute_clusters(all_layer_repr, tokenizer, num_clusters=None, distance_threshold=0.999, num_top_tokens=10)
+    # compute_clusters(all_layer_repr, tokenizer, num_clusters=50, distance_threshold=None, num_top_tokens=30, token_filtered=True)
+    compute_clusters(all_layer_repr, tokenizer, num_clusters=200, distance_threshold=None, num_top_tokens=30, token_filtered=True)
 
 
 if __name__ == '__main__':
