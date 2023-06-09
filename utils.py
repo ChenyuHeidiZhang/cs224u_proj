@@ -98,7 +98,7 @@ def select_sentences_with_tokens(corpus, top_tokens, tokenizer=None, size=100):
     sentences = random.sample(sentences, min(size, len(sentences)))
     return sentences
 
-def select_sentences_for_all_clusters(corpus, cluster_to_tokens, tokenizer=None, size=100):
+def select_sentences_for_all_clusters(corpus, cluster_to_tokens, tokenizer=None, size=96):
     if not tokenizer:
         tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
     clusters_to_sentences = defaultdict(list)
@@ -112,7 +112,7 @@ def select_sentences_for_all_clusters(corpus, cluster_to_tokens, tokenizer=None,
             if len(clusters_to_sentences[cluster_id]) >= size:
                 continue
             for token in tokens:
-                if token in tokenized_sentence:
+                if token in tokenized_sentence and sentence not in clusters_to_sentences[cluster_id]:
                     # print(f"Found a sentence containing {token}:", tokenized_sentence)
                     clusters_to_sentences[cluster_id].append(sentence)
     return clusters_to_sentences
