@@ -1,4 +1,4 @@
-import os
+import os, json
 import numpy as np
 import torch
 from sklearn.cluster import AgglomerativeClustering
@@ -144,19 +144,28 @@ if __name__ == '__main__':
     min_num_cluster = 10
     max_num_cluster = 500
     step = 10
+    # no filtering
     all_layer_repr = load_neuron_repr(filtered=False)
     dissimilarity = find_dissimilarity_matrix(all_layer_repr)
     all_mean_distances_list_no_filtering = enumerate_cluster_number(dissimilarity, min_num_cluster, max_num_cluster, step, name_suffix="_no_filtering")
     mean_mean_distances_list_no_filtering = [np.mean(mean_list) for mean_list in all_mean_distances_list_no_filtering]
+    # frequency filtering only
     all_layer_repr = load_neuron_repr(filtered=True)
     dissimilarity = find_dissimilarity_matrix(all_layer_repr)
     all_mean_distances_list_frequency_only = enumerate_cluster_number(dissimilarity, min_num_cluster, max_num_cluster, step, name_suffix="_frequency_only")
     mean_mean_distances_list_frequency_only = [np.mean(mean_list) for mean_list in all_mean_distances_list_frequency_only]
+    # frequency filtering + smoothed
+    with open(f"{NEURON_REPR_DIR}/neuron_repr_augmented.json", 'r') as f:
+        all_layer_repr = torch.tensor(json.load(f))
+    dissimilarity = find_dissimilarity_matrix(all_layer_repr)
+    all_mean_distances_list_frequency_smoothed = enumerate_cluster_number(dissimilarity, min_num_cluster, max_num_cluster, step, name_suffix="_frequency_smoothed")
+    mean_mean_distances_list_frequency_smoothed = [np.mean(mean_list) for mean_list in all_mean_distances_list_frequency_smoothed]
     plt.figure(figsize=(20, 20))
     plt.plot(range(min_num_cluster, max_num_cluster + 1, step), mean_mean_distances_list_no_filtering, label="no filtering")
     plt.plot(range(min_num_cluster, max_num_cluster + 1, step), mean_mean_distances_list_frequency_only, label="frequency_only")
+    plt.plot(range(min_num_cluster, max_num_cluster + 1, step), mean_mean_distances_list_frequency_smoothed, label="frequency_smoothed")
     plt.xlabel("num clusters")
     plt.ylabel("mean of mean distances")
     plt.title(f"mean of mean dist vs. num clusters")
     plt.legend()
-    plt.savefig(os.path.join(VISUALIZATION_DIR, f"mean_of_mean_dist_vs_num_clusters_{min_num_cluster}-{max_num_cluster}_no_filtering_vs_frequency_only.png"), dpi=400)
+    plt.savefig(os.path.join(VISUALIZATION_DIR, f"mean_of_mean_dist_vs_num_clusters_{min_num_cluster}-{max_num_cluster}.png"), dpi=400)
