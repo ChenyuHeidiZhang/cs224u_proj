@@ -139,10 +139,10 @@ def explore_cluster_distance_thresholds(dissimilarity, thresholds):
 
 
 def run():
-    all_layer_repr = utils.load_neuron_repr(filtered=True)
+    # all_layer_repr = utils.load_neuron_repr(filtered=True)
     # all_layer_repr = filter_less_popular_tokens(all_layer_repr, k=10000)
-    # all_layer_repr = utils.load_augmented_neuron_repr()
-    # all_layer_repr = find_tf_idf_neuron_repr(all_layer_repr)
+    all_layer_repr = utils.load_augmented_neuron_repr()
+    all_layer_repr = find_tf_idf_neuron_repr(all_layer_repr)
     # replace nan with 0
     # all_layer_repr = torch.nan_to_num(all_layer_repr)
 
@@ -152,12 +152,12 @@ def run():
     # compute_clusters(all_layer_repr, tokenizer, num_clusters=50, distance_threshold=None, num_top_tokens=30, token_filtered=True)
     # compute_clusters(all_layer_repr, tokenizer, num_clusters=500, distance_threshold=None, num_top_tokens=10)
     # compute_clusters(all_layer_repr, tokenizer, num_clusters=None, distance_threshold=0.999, num_top_tokens=10)
-    # compute_clusters(all_layer_repr, tokenizer, num_clusters=50, distance_threshold=None, num_top_tokens=30, token_filtered=True)
+    compute_clusters(all_layer_repr, tokenizer, num_clusters=50, distance_threshold=None, num_top_tokens=30, token_filtered=True)
     compute_clusters(all_layer_repr, tokenizer, num_clusters=200, distance_threshold=None, num_top_tokens=30, token_filtered=True)
 
 
 if __name__ == '__main__':
-    # run()
+    run()
 
-    visualize_cluster_token_embeddings(folder_name="n_clusters50_distance_threshold_None", num_tokens_per_cluster=10)
+    # visualize_cluster_token_embeddings(folder_name="n_clusters50_distance_threshold_None", num_tokens_per_cluster=10)
     # visualize_cluster_token_embeddings(folder_name="n_clusters50_max_dist_0.6", max_clusters_to_plot=10, num_tokens_per_cluster=10)
