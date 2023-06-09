@@ -181,10 +181,12 @@ def plot_causal_intervention(filepath, num_clusters, distance_threshold, deactiv
     plt.ylabel("Average MLM loss")
     plt.title("Causal interventions: different MLM loss")
     plt.legend()
-    plt.savefig(os.path.join(dir, f"deactivate_{deactivate_strategy}_causal_intervention_all_random_baselines.png"))
+    plt.savefig(os.path.join(dir, f"deactivate_{deactivate_strategy}_causal_intervention.png"))
 
 
 if __name__=="__main__":
     # plot_causal_intervention("c4/cluster_outputs/n_clusters50_distance_threshold_None/deactivate_mean_cluster_id_to_average_MLM_loss.json", 50, None)
     # plot_causal_intervention("c4/cluster_outputs/n_clusters50_distance_threshold_None_tfidf_filter10k/deactivate_mean_cluster_id_to_average_MLM_loss.json", 50, None, dir="c4/visualizations/n_clusters50_distance_threshold_None_tfidf_filter10k")
-    plot_causal_intervention("c4/cluster_outputs_smoothed/n_clusters50_distance_threshold_None/deactivate_mean_cluster_id_to_average_MLM_loss.json", 50, None, dir="c4/visualizations/n_clusters50_distance_threshold_None_smoothed")
+    # plot_causal_intervention("c4/cluster_outputs_smoothed/n_clusters50_distance_threshold_None/deactivate_mean_cluster_id_to_average_MLM_loss.json", 50, None, dir="c4/visualizations/n_clusters50_distance_threshold_None_smoothed")
+    # plot_causal_intervention("c4/cluster_outputs_frequency_only/n_clusters50_distance_threshold_None/deactivate_mean_cluster_id_to_average_MLM_loss.json", 50, None, dir="c4/cluster_outputs_frequency_only/n_clusters50_distance_threshold_None")
+    plot_causal_intervention("c4/cluster_outputs_frequency_only/n_clusters200_distance_threshold_None/deactivate_mean_cluster_id_to_average_MLM_loss.json", 200, None, dir="c4/cluster_outputs_frequency_only/n_clusters200_distance_threshold_None")

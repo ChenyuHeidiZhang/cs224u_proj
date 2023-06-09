@@ -3,6 +3,5 @@ BATCH_SIZE = 64
 HIDDEN_DIM = 768
 VOCAB_SIZE = 30522
 DATASET = "c4"
-CLUSTER_OUTPUT_DIR = f'{DATASET}/cluster_outputs_frequency_only'
 VISUALIZATION_DIR = f'{DATASET}/visualizations'
 NEURON_REPR_DIR = f'{DATASET}/neuron_repr'
