@@ -92,7 +92,7 @@ def model_forward_cluster_turned_off(model, config, input_ids, attention_mask, l
     # get total number of neurons in the cluster
     num_neurons = sum([len(layer_indices[layer_id]) for layer_id in layer_indices])
     # get average number of neurons per layer
-    average_num_neurons_per_layer = num_neurons // NUM_LAYERS
+    average_num_neurons_per_layer = min(num_neurons // NUM_LAYERS, 1)
     # random select average_num_neurons_per_layer neurons from the range of 0 to HIDDEN_DIM
     positions = torch.randperm(HIDDEN_DIM)[:average_num_neurons_per_layer].tolist()
     
