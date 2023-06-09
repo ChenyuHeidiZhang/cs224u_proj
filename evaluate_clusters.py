@@ -292,10 +292,11 @@ if __name__ == "__main__":
     # evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=32, deactivate_strategy="mean", dir = 'c4/cluster_outputs_smoothed/n_clusters50_distance_threshold_None')
     # evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=32, deactivate_strategy="mean", dir = 'c4/cluster_outputs/n_clusters50_distance_threshold_None_tfidf')
     # evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=32, deactivate_strategy="mean", dir = 'c4/cluster_outputs/n_clusters50_distance_threshold_None')
+    evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=32, deactivate_strategy="mean", dir = 'c4/cluster_outputs_smoothed/n_clusters50_distance_threshold_None_tfidf')
 
 
-    with open('c4/cluster_outputs_smoothed/n_clusters50_distance_threshold_None/cluster_id_to_evaluation_split.json', 'r') as f:
-        cluster_to_evaluation_split = json.load(f)
-    # print out len of evaluation split for each cluster
-    for cluster_id in range(50):
-        print(cluster_id, len(cluster_to_evaluation_split[str(cluster_id)]))
+    # with open('c4/cluster_outputs_smoothed/n_clusters50_distance_threshold_None_tfidf/cluster_id_to_evaluation_split.json', 'r') as f:
+    #     cluster_to_evaluation_split = json.load(f)
+    # # print out len of evaluation split for each cluster
+    # for cluster_id in range(50):
+    #     print(cluster_id, len(cluster_to_evaluation_split[str(cluster_id)]))

@@ -123,7 +123,7 @@ def read_top_activating_tokens(filename):
     with open(filename, "r") as f:
         lines = f.readlines()
     for line in lines:
-        cluster_id, tokens = line.split(":")
+        cluster_id, tokens = line.split(": ")
         cluster_id = cluster_id.strip().split(" ")[1]
         tokens = tokens.strip().replace("[", "").replace("]", "").replace("'", "").split(",")
         cluster_to_tokens[cluster_id] = [token.strip() for token in tokens]

@@ -141,8 +141,8 @@ def explore_cluster_distance_thresholds(dissimilarity, thresholds):
 def run():
     # all_layer_repr = utils.load_neuron_repr()
     # all_layer_repr = filter_less_popular_tokens(all_layer_repr, k=10000)
-    # all_layer_repr = find_tf_idf_neuron_repr(all_layer_repr)
     all_layer_repr = utils.load_augmented_neuron_repr()
+    # all_layer_repr = find_tf_idf_neuron_repr(all_layer_repr)
     # replace nan with 0
     # all_layer_repr = torch.nan_to_num(all_layer_repr)
 
