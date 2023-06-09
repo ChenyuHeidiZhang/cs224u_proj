@@ -294,8 +294,9 @@ if __name__ == "__main__":
     # evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=32, deactivate_strategy="mean", dir = 'c4/cluster_outputs/n_clusters50_distance_threshold_None')
     # evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=32, deactivate_strategy="mean", dir = 'c4/cluster_outputs_smoothed/n_clusters50_distance_threshold_None_tfidf')
     # evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = 'c4/cluster_outputs_frequency_only/n_clusters50_distance_threshold_None')
-    evaluate_cluster(num_clusters=200, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = 'c4/cluster_outputs_frequency_only/n_clusters200_distance_threshold_None')
-
+    # evaluate_cluster(num_clusters=200, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = 'c4/cluster_outputs_frequency_only/n_clusters200_distance_threshold_None')
+    # evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = 'c4/cluster_outputs_smoothed/n_clusters50_distance_threshold_None')
+    evaluate_cluster(num_clusters=200, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = 'c4/cluster_outputs_smoothed/n_clusters200_distance_threshold_None')
 
     # with open('c4/cluster_outputs_frequency_only/n_clusters50_distance_threshold_None/cluster_id_to_evaluation_split.json', 'r') as f:
     #     cluster_to_evaluation_split = json.load(f)
