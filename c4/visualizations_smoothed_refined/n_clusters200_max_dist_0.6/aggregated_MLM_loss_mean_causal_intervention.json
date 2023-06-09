@@ -1,0 +1,10 @@
+{
+    "average_MLM_loss_nothing_turned_off": 4.474584015409152,
+    "average_MLM_loss_cluster_turned_off": 4.521685785849889,
+    "average_MLM_loss_double": 7.832891663312912,
+    "average_MLM_loss_random_position_turned_off": 4.474666051447391,
+    "average_MLM_loss_random_neuron_turned_off": 4.486869794050852,
+    "average_MLM_loss_random_layer_dist_neuron_turned_off": 4.48159620698293,
+    "average_MLM_loss_nothing_turned_off_random_tokens": 2.473347154458364,
+    "average_MLM_loss_cluster_turned_off_random_tokens": 2.4865539149443308
+}

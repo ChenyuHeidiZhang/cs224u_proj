@@ -1,10 +1,10 @@
 {
-    "average_MLM_loss_nothing_turned_off": 5.310315023859341,
-    "average_MLM_loss_cluster_turned_off": 5.405423667232196,
-    "average_MLM_loss_double": 12.357585009336471,
-    "average_MLM_loss_random_position_turned_off": 5.317020251095296,
-    "average_MLM_loss_random_neuron_turned_off": 5.3728785898486775,
-    "average_MLM_loss_random_layer_dist_neuron_turned_off": 5.376612831413745,
-    "average_MLM_loss_nothing_turned_off_random_tokens": 3.4517891172568005,
-    "average_MLM_loss_cluster_turned_off_random_tokens": 3.4745142511526748
+    "average_MLM_loss_nothing_turned_off": 3.971461641242107,
+    "average_MLM_loss_cluster_turned_off": 4.042996313919624,
+    "average_MLM_loss_double": 9.25448485116164,
+    "average_MLM_loss_random_position_turned_off": 3.9794542539616424,
+    "average_MLM_loss_random_neuron_turned_off": 4.029276006668806,
+    "average_MLM_loss_random_layer_dist_neuron_turned_off": 4.024321301172177,
+    "average_MLM_loss_nothing_turned_off_random_tokens": 2.600197462439537,
+    "average_MLM_loss_cluster_turned_off_random_tokens": 2.623980988065402
 }
