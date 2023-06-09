@@ -157,6 +157,7 @@ def run():
 
 
 if __name__ == '__main__':
-    run()
+    # run()
 
-    # visualize_cluster_token_embeddings(folder_name="n_clusters50_distance_threshold_None", num_tokens_per_cluster=30)
+    visualize_cluster_token_embeddings(folder_name="n_clusters50_distance_threshold_None", num_tokens_per_cluster=10)
+    # visualize_cluster_token_embeddings(folder_name="n_clusters50_max_dist_0.6", max_clusters_to_plot=10, num_tokens_per_cluster=10)

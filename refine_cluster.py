@@ -87,4 +87,4 @@ def compute_topk_tokens(new_clusters, all_layer_repr_norm, num_clusters=50, max_
 
 
 if __name__ == '__main__':
-    refine_clusters(num_clusters=50, max_distance_threshold=0.6)
+    refine_clusters(num_clusters=50, max_distance_threshold=0.6, topk_tokens=30)
