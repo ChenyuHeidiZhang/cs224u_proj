@@ -172,14 +172,18 @@ def plot_causal_intervention(filepath, num_clusters, distance_threshold, deactiv
         average_MLM_loss_random_layer_dist_neuron_turned_off.append(cluster_id_to_average_MLM_loss[cluster_id]["random_layer_dist_neuron_turned_off_mean"])
         average_MLM_loss_nothing_turned_off_random_tokens.append(cluster_id_to_average_MLM_loss[cluster_id]["nothing_turned_off_random_tokens"])
         average_MLM_loss_cluster_turned_off_random_tokens.append(cluster_id_to_average_MLM_loss[cluster_id]["cluster_turned_off_random_tokens"])
-    print("average_MLM_loss_nothing_turned_off", np.mean(average_MLM_loss_nothing_turned_off))
-    print("average_MLM_loss_cluster_turned_off", np.mean(average_MLM_loss_cluster_turned_off))
-    print("average_MLM_loss_double", np.mean(average_MLM_loss_double))
-    print("average_MLM_loss_random_position_turned_off", np.mean(average_MLM_loss_random_turned_off))
-    print("average_MLM_loss_random_neuron_turned_off", np.mean(average_MLM_loss_random_neuron_turned_off))
-    print("average_MLM_loss_random_layer_dist_neuron_turned_off", np.mean(average_MLM_loss_random_layer_dist_neuron_turned_off))
-    print("average_MLM_loss_nothing_turned_off_random_tokens", np.mean(average_MLM_loss_nothing_turned_off_random_tokens))
-    print("average_MLM_loss_cluster_turned_off_random_tokens", np.mean(average_MLM_loss_cluster_turned_off_random_tokens))
+    # save those means to a file
+    with open(os.path.join(dir, f"aggregated_MLM_loss_{deactivate_strategy}_causal_intervention.json"), "w") as f:
+        json.dump({
+            "average_MLM_loss_nothing_turned_off": np.mean(average_MLM_loss_nothing_turned_off),
+            "average_MLM_loss_cluster_turned_off": np.mean(average_MLM_loss_cluster_turned_off),
+            "average_MLM_loss_double": np.mean(average_MLM_loss_double),
+            "average_MLM_loss_random_position_turned_off": np.mean(average_MLM_loss_random_turned_off),
+            "average_MLM_loss_random_neuron_turned_off": np.mean(average_MLM_loss_random_neuron_turned_off),
+            "average_MLM_loss_random_layer_dist_neuron_turned_off": np.mean(average_MLM_loss_random_layer_dist_neuron_turned_off),
+            "average_MLM_loss_nothing_turned_off_random_tokens": np.mean(average_MLM_loss_nothing_turned_off_random_tokens),
+            "average_MLM_loss_cluster_turned_off_random_tokens": np.mean(average_MLM_loss_cluster_turned_off_random_tokens),
+        }, f, indent=4)
     plt.figure(figsize=(20, 10))
     plt.scatter(cluster_ids, average_MLM_loss_nothing_turned_off, label="nothing_turned_off", alpha=0.5, marker='^')
     plt.scatter(cluster_ids, average_MLM_loss_cluster_turned_off, label="cluster_turned_off", alpha=0.5, marker='o')
