@@ -8,6 +8,7 @@ from transformers import AutoTokenizer, BertModel, BertConfig, BertForPreTrainin
 
 from constants import *
 import utils
+import visualization
 
 def prepare_inputs_and_labels(batch, top_tokens, tokenizer, config, device, mask_strategy="random", mask_percentage=0.05):
     """
@@ -125,7 +126,7 @@ def model_forward_cluster_turned_off(model, config, input_ids, attention_mask, l
                 hidden_states[:, :, positions] = 0 if deactivate_strategy == "zero" else torch.mean(hidden_states, dim=2, keepdim=True)[:, :, 0][:, :, None]
         else:
             if double_activation:
-                hidden_states[:, :, layer_indices[0]] = 2 * hidden_states[:, :, layer_indices[0]]
+                hidden_states[:, :, layer_indices[layer_id]] = 2 * hidden_states[:, :, layer_indices[layer_id]]
             else:
                 # print("set mean to: ", torch.mean(hidden_states, dim=2, keepdim=True)[:, :, 0][:, :, None].shape)
                 hidden_states[:, :, layer_indices[layer_id]] = 0 if deactivate_strategy == "zero" else torch.mean(hidden_states, dim=2, keepdim=True)[:, :, 0][:, :, None]
@@ -309,7 +310,7 @@ def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top
     utils.save_cluster_to_MLM_loss(cluster_id_to_average_MLM_loss, num_clusters, distance_threshold, deactivate_strategy=deactivate_strategy, dir=dir)
 
     # plot causal intervention results
-    plot_causal_intervention(os.path.join(visualization_dir, f'deactivate_{deactivate_strategy}_cluster_id_to_average_MLM_loss.json'), 200, None, dir=visualization_dir)
+    visualization.plot_causal_intervention(os.path.join(dir, f'deactivate_{deactivate_strategy}_cluster_id_to_average_MLM_loss.json'), 200, None, dir=visualization_dir)
 
 
 if __name__ == "__main__":
@@ -319,11 +320,11 @@ if __name__ == "__main__":
     # evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=32, deactivate_strategy="mean", dir = 'c4/cluster_outputs/n_clusters50_distance_threshold_None')
     # evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=32, deactivate_strategy="mean", dir = 'c4/cluster_outputs_smoothed/n_clusters50_distance_threshold_None_tfidf')
     # evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = 'c4/cluster_outputs_frequency_only/n_clusters50_distance_threshold_None')
-    # evaluate_cluster(num_clusters=200, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = 'c4/cluster_outputs_frequency_only/n_clusters200_distance_threshold_None')
-    # evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = 'c4/cluster_outputs_smoothed/n_clusters50_distance_threshold_None')
-    # evaluate_cluster(num_clusters=200, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = 'c4/cluster_outputs_smoothed/n_clusters200_distance_threshold_None')
-    # evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = 'c4/cluster_outputs_smoothed_refined/n_clusters50_max_dist_0.6')
-    evaluate_cluster(num_clusters=200, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = 'c4/cluster_outputs_smoothed_refined/n_clusters200_max_dist_0.6', visualization_dir="c4/visualizations_smoothed_refined/n_clusters200_max_dist_0.6")
+    # evaluate_cluster(num_clusters=200, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = 'c4/cluster_outputs_frequency_only/n_clusters200_distance_threshold_None', visualization_dir="c4/visualizations_smoothed/n_clusters50_distance_threshold_None")
+    # evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = 'c4/cluster_outputs_smoothed/n_clusters50_distance_threshold_None', visualization_dir="c4/visualizations_smoothed/n_clusters50_distance_threshold_None")
+    # evaluate_cluster(num_clusters=200, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = 'c4/cluster_outputs_smoothed/n_clusters200_distance_threshold_None', visualization_dir="c4/visualizations_smoothed/n_clusters200_distance_threshold_None")
+    evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = 'c4/cluster_outputs_smoothed_refined/n_clusters50_max_dist_0.6', visualization_dir="c4/visualizations_smoothed_refined/n_clusters50_max_dist_0.6")
+    # evaluate_cluster(num_clusters=200, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = 'c4/cluster_outputs_smoothed_refined/n_clusters200_max_dist_0.6', visualization_dir="c4/visualizations_smoothed_refined/n_clusters200_max_dist_0.6")
 
     # with open('c4/cluster_outputs_frequency_only/n_clusters50_distance_threshold_None/cluster_id_to_evaluation_split.json', 'r') as f:
     #     cluster_to_evaluation_split = json.load(f)

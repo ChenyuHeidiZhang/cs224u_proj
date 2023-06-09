@@ -159,18 +159,27 @@ def plot_causal_intervention(filepath, num_clusters, distance_threshold, deactiv
     average_MLM_loss_random_turned_off = []
     average_MLM_loss_random_neuron_turned_off = []
     average_MLM_loss_random_layer_dist_neuron_turned_off = []
+    average_MLM_loss_double = []
+    average_MLM_loss_nothing_turned_off_random_tokens = []
+    average_MLM_loss_cluster_turned_off_random_tokens = []
     for cluster_id in cluster_id_to_average_MLM_loss:
         cluster_ids.append(cluster_id)
         average_MLM_loss_nothing_turned_off.append(cluster_id_to_average_MLM_loss[cluster_id]["nothing_turned_off"])
         average_MLM_loss_cluster_turned_off.append(cluster_id_to_average_MLM_loss[cluster_id]["cluster_turned_off"])
+        average_MLM_loss_double.append(cluster_id_to_average_MLM_loss[cluster_id]["cluster_double"])
         average_MLM_loss_random_turned_off.append(cluster_id_to_average_MLM_loss[cluster_id]["random_position_dist_neuron_turned_off_mean"])
         average_MLM_loss_random_neuron_turned_off.append(cluster_id_to_average_MLM_loss[cluster_id]["random_neuron_turned_off_mean"])
         average_MLM_loss_random_layer_dist_neuron_turned_off.append(cluster_id_to_average_MLM_loss[cluster_id]["random_layer_dist_neuron_turned_off_mean"])
+        average_MLM_loss_nothing_turned_off_random_tokens.append(cluster_id_to_average_MLM_loss[cluster_id]["nothing_turned_off_random_tokens"])
+        average_MLM_loss_cluster_turned_off_random_tokens.append(cluster_id_to_average_MLM_loss[cluster_id]["cluster_turned_off_random_tokens"])
     print("average_MLM_loss_nothing_turned_off", np.mean(average_MLM_loss_nothing_turned_off))
     print("average_MLM_loss_cluster_turned_off", np.mean(average_MLM_loss_cluster_turned_off))
+    print("average_MLM_loss_double", np.mean(average_MLM_loss_double))
     print("average_MLM_loss_random_position_turned_off", np.mean(average_MLM_loss_random_turned_off))
     print("average_MLM_loss_random_neuron_turned_off", np.mean(average_MLM_loss_random_neuron_turned_off))
     print("average_MLM_loss_random_layer_dist_neuron_turned_off", np.mean(average_MLM_loss_random_layer_dist_neuron_turned_off))
+    print("average_MLM_loss_nothing_turned_off_random_tokens", np.mean(average_MLM_loss_nothing_turned_off_random_tokens))
+    print("average_MLM_loss_cluster_turned_off_random_tokens", np.mean(average_MLM_loss_cluster_turned_off_random_tokens))
     plt.figure(figsize=(20, 10))
     plt.scatter(cluster_ids, average_MLM_loss_nothing_turned_off, label="nothing_turned_off", alpha=0.5, marker='^')
     plt.scatter(cluster_ids, average_MLM_loss_cluster_turned_off, label="cluster_turned_off", alpha=0.5, marker='o')
@@ -192,5 +201,5 @@ if __name__=="__main__":
     # plot_causal_intervention("c4/cluster_outputs_frequency_only/n_clusters200_distance_threshold_None/deactivate_mean_cluster_id_to_average_MLM_loss.json", 200, None, dir="c4/cluster_outputs_frequency_only/n_clusters200_distance_threshold_None")
     # plot_causal_intervention("c4/cluster_outputs_smoothed/n_clusters50_distance_threshold_None/deactivate_mean_cluster_id_to_average_MLM_loss.json", 50, None, dir="c4/visualizations_smoothed/n_clusters50_distance_threshold_None")
     # plot_causal_intervention("c4/cluster_outputs_smoothed/n_clusters200_distance_threshold_None/deactivate_mean_cluster_id_to_average_MLM_loss.json", 200, None, dir="c4/visualizations_smoothed/n_clusters200_distance_threshold_None")
-    # plot_causal_intervention("c4/cluster_outputs_smoothed_refined/n_clusters50_max_dist_0.6/deactivate_mean_cluster_id_to_average_MLM_loss.json", 200, None, dir="c4/visualizations_smoothed_refined/n_clusters50_max_dist_0.6")
-    plot_causal_intervention("c4/cluster_outputs_smoothed_refined/n_clusters200_max_dist_0.6/deactivate_mean_cluster_id_to_average_MLM_loss.json", 200, None, dir="c4/visualizations_smoothed_refined/n_clusters200_max_dist_0.6")
+    plot_causal_intervention("c4/cluster_outputs_smoothed_refined/n_clusters50_max_dist_0.6/deactivate_mean_cluster_id_to_average_MLM_loss.json", 200, None, dir="c4/visualizations_smoothed_refined/n_clusters200_max_dist_0.6")
+    # plot_causal_intervention("c4/cluster_outputs_smoothed_refined/n_clusters200_max_dist_0.6/deactivate_mean_cluster_id_to_average_MLM_loss.json", 50, None, dir="c4/visualizations_smoothed_refined/n_clusters50_max_dist_0.6")
