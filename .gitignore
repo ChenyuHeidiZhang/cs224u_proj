@@ -3,3 +3,4 @@ __pycache__
 tokenizer_info/
 cc.en.300.bin*
 *.DS_Store
+p3.2_v100.pem
