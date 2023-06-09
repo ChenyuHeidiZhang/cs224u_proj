@@ -88,32 +88,32 @@ def enumerate_cluster_number(dissimilarity_matrix, min_num_cluster, max_num_clus
         # plt.savefig(os.path.join(VISUALIZATION_DIR, f"quantiles_of_{num_clusters}_clusters{name_suffix}.png"), dpi=400)
 
 
-    # plot all max distances versus num_clusters
-    plt.figure(figsize=(20, 20))
-    for num_clusters in range(min_num_cluster, max_num_cluster + 1, step):
-        plt.scatter([num_clusters] * num_clusters, all_max_distances_list[(num_clusters-min_num_cluster) // step])
-    plt.xlabel("num clusters")
-    plt.ylabel("max distances")
-    plt.title(f"max dist vs. num clusters")
-    plt.savefig(os.path.join(VISUALIZATION_DIR, f"all_max_dist_vs_num_clusters_{min_num_cluster}-{max_num_cluster}{name_suffix}.png"), dpi=400)
+    # # plot all max distances versus num_clusters
+    # plt.figure(figsize=(20, 20))
+    # for num_clusters in range(min_num_cluster, max_num_cluster + 1, step):
+    #     plt.scatter([num_clusters] * num_clusters, all_max_distances_list[(num_clusters-min_num_cluster) // step])
+    # plt.xlabel("num clusters")
+    # plt.ylabel("max distances")
+    # plt.title(f"max dist vs. num clusters")
+    # plt.savefig(os.path.join(VISUALIZATION_DIR, f"all_max_dist_vs_num_clusters_{min_num_cluster}-{max_num_cluster}{name_suffix}.png"), dpi=400)
 
-    # plot all mean distances versus num_clusters
-    plt.figure(figsize=(20, 20))
-    for num_clusters in range(min_num_cluster, max_num_cluster + 1, step):
-        plt.scatter([num_clusters] * num_clusters, all_mean_distances_list[(num_clusters-min_num_cluster) // step])
-    plt.xlabel("num clusters")
-    plt.ylabel("mean distances")
-    plt.title(f"mean dist vs. num clusters")
-    plt.savefig(os.path.join(VISUALIZATION_DIR, f"all_mean_dist_vs_num_clusters_{min_num_cluster}-{max_num_cluster}{name_suffix}.png"), dpi=400)
+    # # plot all mean distances versus num_clusters
+    # plt.figure(figsize=(20, 20))
+    # for num_clusters in range(min_num_cluster, max_num_cluster + 1, step):
+    #     plt.scatter([num_clusters] * num_clusters, all_mean_distances_list[(num_clusters-min_num_cluster) // step])
+    # plt.xlabel("num clusters")
+    # plt.ylabel("mean distances")
+    # plt.title(f"mean dist vs. num clusters")
+    # plt.savefig(os.path.join(VISUALIZATION_DIR, f"all_mean_dist_vs_num_clusters_{min_num_cluster}-{max_num_cluster}{name_suffix}.png"), dpi=400)
 
-    # plot all std distances versus num_clusters
-    plt.figure(figsize=(20, 20))
-    for num_clusters in range(min_num_cluster, max_num_cluster + 1, step):
-        plt.scatter([num_clusters] * num_clusters, all_std_distances_list[(num_clusters-min_num_cluster) // step])
-    plt.xlabel("num clusters")
-    plt.ylabel("std distances")
-    plt.title(f"std dist vs. num clusters")
-    plt.savefig(os.path.join(VISUALIZATION_DIR, f"all_std_dist_vs_num_clusters_{min_num_cluster}-{max_num_cluster}{name_suffix}.png"), dpi=400)
+    # # plot all std distances versus num_clusters
+    # plt.figure(figsize=(20, 20))
+    # for num_clusters in range(min_num_cluster, max_num_cluster + 1, step):
+    #     plt.scatter([num_clusters] * num_clusters, all_std_distances_list[(num_clusters-min_num_cluster) // step])
+    # plt.xlabel("num clusters")
+    # plt.ylabel("std distances")
+    # plt.title(f"std dist vs. num clusters")
+    # plt.savefig(os.path.join(VISUALIZATION_DIR, f"all_std_dist_vs_num_clusters_{min_num_cluster}-{max_num_cluster}{name_suffix}.png"), dpi=400)
 
     # # plot all distances versus num_clusters with annotation
     # plt.figure(figsize=(30, 40))
@@ -126,12 +126,37 @@ def enumerate_cluster_number(dissimilarity_matrix, min_num_cluster, max_num_clus
     # plt.title(f"all dist vs. num clusters")
     # plt.savefig(os.path.join(VISUALIZATION_DIR, f"all_dist_vs_num_clusters_{min_num_cluster}-{max_num_cluster}_with_annotation{name_suffix}.png"), dpi=400)  
 
+    return all_mean_distances_list
+
+
 
 if __name__ == '__main__':
-    all_layer_repr = load_neuron_repr(filtered=True)
+    # all_layer_repr = load_neuron_repr(filtered=True)
     # all_layer_repr = find_tf_idf_neuron_repr(all_layer_repr)
     # all_layer_repr = load_and_mask_neuron_repr(threshold=1.5)
-    dissimilarity = find_dissimilarity_matrix(all_layer_repr)
+    # dissimilarity = find_dissimilarity_matrix(all_layer_repr)
     # enumerate_cluster_number(dissimilarity, 10, 500, 10, name_suffix="_no_filtering")
     # print_cluster_stats(dissimilarity, range(10, 500, 10))
 
+
+    
+    # plot mean of mean distances versus num_clusters
+    min_num_cluster = 10
+    max_num_cluster = 500
+    step = 10
+    all_layer_repr = load_neuron_repr(filtered=False)
+    dissimilarity = find_dissimilarity_matrix(all_layer_repr)
+    all_mean_distances_list_no_filtering = enumerate_cluster_number(dissimilarity, min_num_cluster, max_num_cluster, step, name_suffix="_no_filtering")
+    mean_mean_distances_list_no_filtering = [np.mean(mean_list) for mean_list in all_mean_distances_list_no_filtering]
+    all_layer_repr = load_neuron_repr(filtered=True)
+    dissimilarity = find_dissimilarity_matrix(all_layer_repr)
+    all_mean_distances_list_frequency_only = enumerate_cluster_number(dissimilarity, min_num_cluster, max_num_cluster, step, name_suffix="_frequency_only")
+    mean_mean_distances_list_frequency_only = [np.mean(mean_list) for mean_list in all_mean_distances_list_frequency_only]
+    plt.figure(figsize=(20, 20))
+    plt.plot(range(min_num_cluster, max_num_cluster + 1, step), mean_mean_distances_list_no_filtering, label="no filtering")
+    plt.plot(range(min_num_cluster, max_num_cluster + 1, step), mean_mean_distances_list_frequency_only, label="frequency_only")
+    plt.xlabel("num clusters")
+    plt.ylabel("mean of mean distances")
+    plt.title(f"mean of mean dist vs. num clusters")
+    plt.legend()
+    plt.savefig(os.path.join(VISUALIZATION_DIR, f"mean_of_mean_dist_vs_num_clusters_{min_num_cluster}-{max_num_cluster}_no_filtering_vs_frequency_only.png"), dpi=400)
