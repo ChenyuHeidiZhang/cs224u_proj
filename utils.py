@@ -146,10 +146,15 @@ def get_random_layer_indices(num_neurons_to_turn_off):
         random_layer_indices[layer_id].append(neuron_index % 768)
     return random_layer_indices
 
-def save_cluster_to_MLM_loss(cluster_id_to_MLM_loss, num_clusters, distance_threshold, deactivate_strategy="zero", dir=None):
+def save_cluster_to_MLM_loss(cluster_id_to_MLM_loss, num_clusters, distance_threshold, deactivate_strategy="zero", dir=None, accuracy=False):
     if not dir:
         dir = f'{CLUSTER_OUTPUT_DIR}/n_clusters{num_clusters}_distance_threshold_{distance_threshold}/'
     if not os.path.exists(dir):
         os.makedirs(dir)
-    with open(os.path.join(dir, f'deactivate_{deactivate_strategy}_cluster_id_to_average_MLM_loss.json'), 'w') as f:
+    with open(os.path.join(dir, f"deactivate_{deactivate_strategy}_cluster_id_to_average_{'accuracy' if accuracy else 'MLM_loss'}.json"), 'w') as f:
         json.dump(cluster_id_to_MLM_loss, f, indent=4)
+
+
+def compute_accuracy(prediction_scores, labels):
+    masked_lm_accuracy = torch.sum(torch.argmax(prediction_scores, dim=-1) == labels) / torch.sum(labels != -100)
+    return masked_lm_accuracy

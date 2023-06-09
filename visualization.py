@@ -148,7 +148,7 @@ def visualize_cluster_token_embeddings(folder_name, max_clusters_to_plot=5, num_
     plt.legend()
     plt.savefig(os.path.join(VISUALIZATION_DIR, folder_name, f"cluster_token_embeddings_{max_clusters_to_plot}.png"))
 
-def plot_causal_intervention(filepath, num_clusters, distance_threshold, deactivate_strategy="mean", dir=None):
+def plot_causal_intervention(filepath, num_clusters, distance_threshold, deactivate_strategy="mean", dir=None, accuracy=False):
     if not dir:
         dir = f"{VISUALIZATION_DIR}/n_clusters{num_clusters}_distance_threshold_{distance_threshold}/"
     with open(filepath, "r") as f:
@@ -194,7 +194,7 @@ def plot_causal_intervention(filepath, num_clusters, distance_threshold, deactiv
     plt.ylabel("Average MLM loss")
     plt.title("Causal interventions: different MLM loss")
     plt.legend()
-    plt.savefig(os.path.join(dir, f"deactivate_{deactivate_strategy}_causal_intervention.png"))
+    plt.savefig(os.path.join(dir, f"deactivate_{deactivate_strategy}_causal_intervention_{'accuracy' if accuracy else ''}.png"))
 
 
 if __name__=="__main__":

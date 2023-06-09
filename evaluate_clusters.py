@@ -51,7 +51,7 @@ def prepare_inputs_and_labels(batch, top_tokens, tokenizer, config, device, mask
         # count number of masked indices that is not zero
         # print("Number of masked tokens: ", torch.nonzero(masked_indices).size(0))
         input_ids[masked_indices] = tokenizer.mask_token_id
-        print("non zero masked indices: ", torch.nonzero(masked_indices).size(0))
+        # print("non zero masked indices: ", torch.nonzero(masked_indices).size(0))
     elif mask_strategy == "top":
         # mask top activating tokens
         token_ids = tokenizer.convert_tokens_to_ids(top_tokens)
@@ -68,9 +68,10 @@ def prepare_inputs_and_labels(batch, top_tokens, tokenizer, config, device, mask
     # MLM loss should ignore indices other than the masked indices
     # set labels to -100 (ignore index) except the masked indices
     labels[~masked_indices] = -100
+    print('num of masked tokens: ', torch.sum(labels != -100))
     return input_ids, attention_mask, labels
 
-def model_forward_cluster_turned_off(model, config, input_ids, attention_mask, labels, layer_indices, device, random=False, random_strategy="layer", deactivate_strategy="zero", double_activation=False):
+def model_forward_cluster_turned_off(model, config, input_ids, attention_mask, labels, layer_indices, device, random=False, random_strategy="layer", deactivate_strategy="zero", double_activation=False, accuracy=False):
     """
     Args:
         model: BertForMaskedLM
@@ -108,7 +109,9 @@ def model_forward_cluster_turned_off(model, config, input_ids, attention_mask, l
             hidden_states[:, :, positions] = 0 if deactivate_strategy == "zero" else torch.mean(hidden_states, dim=2, keepdim=True)[:, :, 0][:, :, None]
     else:
         if double_activation:
-            hidden_states[:, :, layer_indices[0]] = 2 * hidden_states[:, :, layer_indices[0]]
+            # hidden_states[:, :, layer_indices[0]] = 2 * hidden_states[:, :, layer_indices[0]]
+            ids = torch.tensor(layer_indices[0])
+            hidden_states[:, :, ids] = torch.where(hidden_states[:, :, ids]>0, 2 * hidden_states[:, :, ids], hidden_states[:, :, ids])
         else:
             # set the activation of neurons in the embedding layer to 0
             hidden_states[:, :, layer_indices[0]] = 0 if deactivate_strategy == "zero" else torch.mean(hidden_states, dim=2, keepdim=True)[:, :, 0][:, :, None]
@@ -126,17 +129,28 @@ def model_forward_cluster_turned_off(model, config, input_ids, attention_mask, l
                 hidden_states[:, :, positions] = 0 if deactivate_strategy == "zero" else torch.mean(hidden_states, dim=2, keepdim=True)[:, :, 0][:, :, None]
         else:
             if double_activation:
-                hidden_states[:, :, layer_indices[layer_id]] = 2 * hidden_states[:, :, layer_indices[layer_id]]
+                # hidden_states[:, :, layer_indices[layer_id]] = 2 * hidden_states[:, :, layer_indices[layer_id]]
+                # double the activation of neurons in the cluster with positive activation
+                ids = torch.tensor(layer_indices[layer_id])
+                hidden_states[:, :, ids] = torch.where(hidden_states[:, :, ids]>0, 2 * hidden_states[:, :, ids], hidden_states[:, :, ids])
             else:
                 # print("set mean to: ", torch.mean(hidden_states, dim=2, keepdim=True)[:, :, 0][:, :, None].shape)
                 hidden_states[:, :, layer_indices[layer_id]] = 0 if deactivate_strategy == "zero" else torch.mean(hidden_states, dim=2, keepdim=True)[:, :, 0][:, :, None]
     sequence_output = hidden_states # shape: (batch_size, seq_len, hidden_size)
     prediction_scores = model.cls(sequence_output) # shape: (batch_size, sequence_length, vocab_size)
-    # compute MLM loss
-    masked_lm_loss = loss_fct(prediction_scores.view(-1, config.vocab_size), labels.view(-1))
-    return masked_lm_loss
 
-def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top", mask_percentage=0.15, num_repeat=5, evaluation_size=96, deactivate_strategy="zero", dir=None, visualization_dir=None):
+    if not accuracy:
+        # compute MLM loss
+        masked_lm_loss = loss_fct(prediction_scores.view(-1, config.vocab_size), labels.view(-1))
+        # return masked_lm_loss
+        return masked_lm_loss
+    else:
+        # compute accuracy for the masked tokens, ignore PAD tokens
+        masked_lm_accuracy = utils.compute_accuracy(prediction_scores, labels)
+        return masked_lm_accuracy
+
+
+def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top", mask_percentage=0.15, num_repeat=5, evaluation_size=96, deactivate_strategy="zero", dir=None, visualization_dir=None, accuracy=False):
     '''
     Evaluate cluster using causal ablation.
 
@@ -236,53 +250,59 @@ def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top
 
                 # do not turn off neurons: predict top activating tokens
                 outputs = model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
-                masked_lm_loss = outputs.loss
-                average_MLM_loss += masked_lm_loss.item()
+                if not accuracy:
+                    masked_lm_loss = outputs.loss
+                    average_MLM_loss += masked_lm_loss.item()
+                else:
+                    average_MLM_loss += utils.compute_accuracy(outputs.logits, labels).item()
 
                 # do not turn off neurons: predict random tokens
                 outputs = model(input_ids=random_mask_input_ids, attention_mask=random_mask_attention_mask, labels=random_mask_labels)
-                masked_lm_loss_random_tokens = outputs.loss
-                average_MLM_loss_random_tokens += masked_lm_loss_random_tokens.item()
+                if not accuracy:
+                    masked_lm_loss_random_tokens = outputs.loss
+                    average_MLM_loss_random_tokens += masked_lm_loss_random_tokens.item()
+                else:
+                    average_MLM_loss_random_tokens += utils.compute_accuracy(outputs.logits, random_mask_labels).item()
 
 
                 # turn off neurons in cluster: predict top activating tokens
-                masked_lm_loss_cluster_turned_off = model_forward_cluster_turned_off(model, config, input_ids, attention_mask, labels, layer_indices, device, deactivate_strategy=deactivate_strategy)
+                masked_lm_loss_cluster_turned_off = model_forward_cluster_turned_off(model, config, input_ids, attention_mask, labels, layer_indices, device, deactivate_strategy=deactivate_strategy, accuracy=accuracy)
                 average_MLM_loss_cluster_turned_off += masked_lm_loss_cluster_turned_off.item()
 
                 # double neurons in cluster: predict top activating token
-                masked_lm_loss_cluster_double = model_forward_cluster_turned_off(model, config, input_ids, attention_mask, labels, layer_indices, device, deactivate_strategy=deactivate_strategy, double_activation=True)
+                masked_lm_loss_cluster_double = model_forward_cluster_turned_off(model, config, input_ids, attention_mask, labels, layer_indices, device, deactivate_strategy=deactivate_strategy, double_activation=True, accuracy=accuracy)
                 average_MLM_loss_cluster_double += masked_lm_loss_cluster_double.item()
 
                 # # turn off neurons in cluster: predict random tokens 
-                masked_lm_loss_cluster_turned_off_random_tokens = model_forward_cluster_turned_off(model, config, random_mask_input_ids, random_mask_attention_mask, random_mask_labels, layer_indices, device, deactivate_strategy=deactivate_strategy)
+                masked_lm_loss_cluster_turned_off_random_tokens = model_forward_cluster_turned_off(model, config, random_mask_input_ids, random_mask_attention_mask, random_mask_labels, layer_indices, device, deactivate_strategy=deactivate_strategy, accuracy=accuracy)
                 average_MLM_loss_cluster_turned_off_random_tokens += masked_lm_loss_cluster_turned_off_random_tokens.item()
 
 
                 # turn off neurons randomly following the same position distribution
                 for i in range(num_repeat):
-                    masked_lm_loss_random_position_dist = model_forward_cluster_turned_off(model, config, input_ids, attention_mask, labels, layer_indices, device, random=True, random_strategy="position", deactivate_strategy=deactivate_strategy)
+                    masked_lm_loss_random_position_dist = model_forward_cluster_turned_off(model, config, input_ids, attention_mask, labels, layer_indices, device, random=True, random_strategy="position", deactivate_strategy=deactivate_strategy, accuracy=accuracy)
                     average_MLM_loss_random_position_dist_lst[i] += masked_lm_loss_random_position_dist.item()
 
                 # turn off random neurons
                 for i in range(num_repeat):
                     random_layer_indices = random_layer_indices_lst[i]
-                    masked_lm_loss_random = model_forward_cluster_turned_off(model, config, input_ids, attention_mask, labels, random_layer_indices, device, deactivate_strategy=deactivate_strategy)
+                    masked_lm_loss_random = model_forward_cluster_turned_off(model, config, input_ids, attention_mask, labels, random_layer_indices, device, deactivate_strategy=deactivate_strategy, accuracy=accuracy)
                     average_MLM_loss_random_lst[i] += masked_lm_loss_random.item()
 
                 # turn off neurons randomly following same layer distribution
                 for i in range(num_repeat):
-                    masked_lm_loss_random_layer_dist = model_forward_cluster_turned_off(model, config, input_ids, attention_mask, labels, layer_indices, device, random=True, random_strategy="layer", deactivate_strategy=deactivate_strategy)
+                    masked_lm_loss_random_layer_dist = model_forward_cluster_turned_off(model, config, input_ids, attention_mask, labels, layer_indices, device, random=True, random_strategy="layer", deactivate_strategy=deactivate_strategy, accuracy=accuracy)
                     average_MLM_loss_random_layer_dist_lst[i] += masked_lm_loss_random_layer_dist.item()
 
-                
-        average_MLM_loss /= len(evaluation_split) / BATCH_SIZE
-        average_MLM_loss_random_tokens /= len(evaluation_split) / BATCH_SIZE
-        average_MLM_loss_cluster_double /= len(evaluation_split) / BATCH_SIZE
-        average_MLM_loss_cluster_turned_off /= len(evaluation_split) / BATCH_SIZE
-        average_MLM_loss_cluster_turned_off_random_tokens /= len(evaluation_split) / BATCH_SIZE
-        average_MLM_loss_random_position_dist_lst = [item / (len(evaluation_split) / BATCH_SIZE) for item in average_MLM_loss_random_position_dist_lst]
-        average_MLM_loss_random_lst = [item / (len(evaluation_split) / BATCH_SIZE) for item in average_MLM_loss_random_lst]
-        average_MLM_loss_random_layer_dist_lst = [item / (len(evaluation_split) / BATCH_SIZE) for item in average_MLM_loss_random_layer_dist_lst]
+        num_batches = len(evaluation_split) / BATCH_SIZE
+        average_MLM_loss /= num_batches
+        average_MLM_loss_random_tokens /= num_batches
+        average_MLM_loss_cluster_double /= num_batches
+        average_MLM_loss_cluster_turned_off /= num_batches
+        average_MLM_loss_cluster_turned_off_random_tokens /= num_batches
+        average_MLM_loss_random_position_dist_lst = [item / num_batches for item in average_MLM_loss_random_position_dist_lst]
+        average_MLM_loss_random_lst = [item / num_batches for item in average_MLM_loss_random_lst]
+        average_MLM_loss_random_layer_dist_lst = [item / num_batches for item in average_MLM_loss_random_layer_dist_lst]
 
         cluster_id_to_average_MLM_loss[cluster_id] = {
             "nothing_turned_off": average_MLM_loss,
@@ -307,10 +327,10 @@ def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top
         random_layer_dist_neuron_turned_off: {average_MLM_loss_random_layer_dist_lst}")
 
     # save cluster_id_to_average_MLM_loss to file
-    utils.save_cluster_to_MLM_loss(cluster_id_to_average_MLM_loss, num_clusters, distance_threshold, deactivate_strategy=deactivate_strategy, dir=dir)
+    utils.save_cluster_to_MLM_loss(cluster_id_to_average_MLM_loss, num_clusters, distance_threshold, deactivate_strategy=deactivate_strategy, dir=dir, accuracy=accuracy)
 
     # plot causal intervention results
-    visualization.plot_causal_intervention(os.path.join(dir, f'deactivate_{deactivate_strategy}_cluster_id_to_average_MLM_loss.json'), 200, None, dir=visualization_dir)
+    visualization.plot_causal_intervention(os.path.join(dir, f'deactivate_{deactivate_strategy}_cluster_id_to_average_MLM_loss.json'), 200, None, dir=visualization_dir, accuracy=accuracy)
 
 
 if __name__ == "__main__":
@@ -320,8 +340,8 @@ if __name__ == "__main__":
     # evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=32, deactivate_strategy="mean", dir = 'c4/cluster_outputs/n_clusters50_distance_threshold_None')
     # evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=32, deactivate_strategy="mean", dir = 'c4/cluster_outputs_smoothed/n_clusters50_distance_threshold_None_tfidf')
     # frequency only
-    evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = 'c4/cluster_outputs_frequency_only/n_clusters50_distance_threshold_None', visualization_dir="c4/visualizations_frequency_only/n_clusters50_distance_threshold_None")
-    evaluate_cluster(num_clusters=200, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = 'c4/cluster_outputs_frequency_only/n_clusters200_distance_threshold_None', visualization_dir="c4/visualizations_frequency_only/n_clusters200_distance_threshold_None")
+    evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=3, evaluation_size=96, deactivate_strategy="mean", dir = 'c4/cluster_outputs_frequency_only/n_clusters50_distance_threshold_None', visualization_dir="c4/visualizations_frequency_only/n_clusters50_distance_threshold_None", accuracy=True)
+    # evaluate_cluster(num_clusters=200, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = 'c4/cluster_outputs_frequency_only/n_clusters200_distance_threshold_None', visualization_dir="c4/visualizations_frequency_only/n_clusters200_distance_threshold_None_accuracy")
     # smoothed
     # evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = 'c4/cluster_outputs_smoothed/n_clusters50_distance_threshold_None', visualization_dir="c4/visualizations_smoothed/n_clusters50_distance_threshold_None")
     # evaluate_cluster(num_clusters=200, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = 'c4/cluster_outputs_smoothed/n_clusters200_distance_threshold_None', visualization_dir="c4/visualizations_smoothed/n_clusters200_distance_threshold_None")
