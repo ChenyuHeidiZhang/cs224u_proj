@@ -32,7 +32,7 @@ def load_neuron_repr(filtered=True):
     print(f'Loading neuron representations from {NEURON_REPR_DIR}')
     neuron_representations_avg = {}
     for i in tqdm(range(NUM_LAYERS)):
-        with open(f"{NEURON_REPR_DIR}/neuron_repr_{i}_{'filtered' if filtered else ''}.json", 'r') as f:
+        with open(f"{NEURON_REPR_DIR}/neuron_repr_{i}{'_filtered' if filtered else ''}.json", 'r') as f:
             neuron_representations_avg[i] = torch.tensor(json.load(f)).t()  # shape (vocab_size, num_neurons) -> (num_neurons, vocab_size); num_neurons is hidden_dim
 
     # concatenate all layers
