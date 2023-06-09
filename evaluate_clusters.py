@@ -224,8 +224,10 @@ def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top
         average_MLM_loss_random_layer_dist_lst = [0] * num_repeat # random neurons turned off following same layer distribution
         average_MLM_loss_cluster_turned_off = 0 # neurons in cluster turned off
         average_MLM_loss_cluster_turned_off_random_tokens = 0 # neurons in cluster turned off, random tokens turned off
+        num_batches = 0
         with torch.no_grad():
             for start_index in tqdm(range(0, len(evaluation_split), BATCH_SIZE)):
+                num_batches += 1
                 batch = evaluation_split[start_index: start_index+BATCH_SIZE]
 
                 # prepare inputs and labels that masks top activating tokens
@@ -274,15 +276,14 @@ def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top
                     masked_lm_loss_random_layer_dist = model_forward_cluster_turned_off(model, config, input_ids, attention_mask, labels, layer_indices, device, random=True, random_strategy="layer", deactivate_strategy=deactivate_strategy)
                     average_MLM_loss_random_layer_dist_lst[i] += masked_lm_loss_random_layer_dist.item()
 
-                
-        average_MLM_loss /= len(evaluation_split) / BATCH_SIZE
-        average_MLM_loss_random_tokens /= len(evaluation_split) / BATCH_SIZE
-        average_MLM_loss_cluster_double /= len(evaluation_split) / BATCH_SIZE
-        average_MLM_loss_cluster_turned_off /= len(evaluation_split) / BATCH_SIZE
-        average_MLM_loss_cluster_turned_off_random_tokens /= len(evaluation_split) / BATCH_SIZE
-        average_MLM_loss_random_position_dist_lst = [item / (len(evaluation_split) / BATCH_SIZE) for item in average_MLM_loss_random_position_dist_lst]
-        average_MLM_loss_random_lst = [item / (len(evaluation_split) / BATCH_SIZE) for item in average_MLM_loss_random_lst]
-        average_MLM_loss_random_layer_dist_lst = [item / (len(evaluation_split) / BATCH_SIZE) for item in average_MLM_loss_random_layer_dist_lst]
+        average_MLM_loss /= num_batches
+        average_MLM_loss_random_tokens /= num_batches
+        average_MLM_loss_cluster_double /= num_batches
+        average_MLM_loss_cluster_turned_off /= num_batches
+        average_MLM_loss_cluster_turned_off_random_tokens /= num_batches
+        average_MLM_loss_random_position_dist_lst = [item / num_batches for item in average_MLM_loss_random_position_dist_lst]
+        average_MLM_loss_random_lst = [item / num_batches for item in average_MLM_loss_random_lst]
+        average_MLM_loss_random_layer_dist_lst = [item / num_batches for item in average_MLM_loss_random_layer_dist_lst]
 
         cluster_id_to_average_MLM_loss[cluster_id] = {
             "nothing_turned_off": average_MLM_loss,
@@ -320,17 +321,17 @@ if __name__ == "__main__":
     # evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=32, deactivate_strategy="mean", dir = 'c4/cluster_outputs/n_clusters50_distance_threshold_None')
     # evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=32, deactivate_strategy="mean", dir = 'c4/cluster_outputs_smoothed/n_clusters50_distance_threshold_None_tfidf')
     # frequency only
-    # evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = f'{DATASET}/cluster_outputs_frequency_only/n_clusters50_distance_threshold_None', visualization_dir=f"{DATASET}/visualizations_frequency_only/n_clusters50_distance_threshold_None")
-    # evaluate_cluster(num_clusters=200, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = f'{DATASET}/cluster_outputs_frequency_only/n_clusters200_distance_threshold_None', visualization_dir=f"{DATASET}/visualizations_frequency_only/n_clusters200_distance_threshold_None")
+    evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = f'{DATASET}/cluster_outputs_frequency_only/n_clusters50_distance_threshold_None', visualization_dir=f"{DATASET}/visualizations_frequency_only/n_clusters50_distance_threshold_None")
+    evaluate_cluster(num_clusters=200, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = f'{DATASET}/cluster_outputs_frequency_only/n_clusters200_distance_threshold_None', visualization_dir=f"{DATASET}/visualizations_frequency_only/n_clusters200_distance_threshold_None")
     # smoothed
-    # evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = f'{DATASET}/cluster_outputs_smoothed/n_clusters50_distance_threshold_None', visualization_dir=f"{DATASET}/visualizations_smoothed/n_clusters50_distance_threshold_None")
-    # evaluate_cluster(num_clusters=200, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = f'{DATASET}/cluster_outputs_smoothed/n_clusters200_distance_threshold_None', visualization_dir=f"{DATASET}/visualizations_smoothed/n_clusters200_distance_threshold_None")
+    evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = f'{DATASET}/cluster_outputs_smoothed/n_clusters50_distance_threshold_None', visualization_dir=f"{DATASET}/visualizations_smoothed/n_clusters50_distance_threshold_None")
+    evaluate_cluster(num_clusters=200, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = f'{DATASET}/cluster_outputs_smoothed/n_clusters200_distance_threshold_None', visualization_dir=f"{DATASET}/visualizations_smoothed/n_clusters200_distance_threshold_None")
     # smoothed + tfidf 
     evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = f'{DATASET}/cluster_outputs_smoothed_tfidf/n_clusters50_distance_threshold_None', visualization_dir=f"{DATASET}/visualizations_smoothed_tfidf/n_clusters50_distance_threshold_None")
     evaluate_cluster(num_clusters=200, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = f'{DATASET}/cluster_outputs_smoothed_tfidf/n_clusters200_distance_threshold_None', visualization_dir=f"{DATASET}/visualizations_smoothed_tfidf/n_clusters200_distance_threshold_None")
     # smoothed refined
-    # evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = f'{DATASET}/cluster_outputs_smoothed_refined/n_clusters50_max_dist_0.6', visualization_dir=f"{DATASET}/visualizations_smoothed_refined/n_clusters50_max_dist_0.6")
-    # evaluate_cluster(num_clusters=200, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = f'{DATASET}/cluster_outputs_smoothed_refined/n_clusters200_max_dist_0.6', visualization_dir=f"{DATASET}/visualizations_smoothed_refined/n_clusters200_max_dist_0.6")
+    evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = f'{DATASET}/cluster_outputs_smoothed_refined/n_clusters50_max_dist_0.6', visualization_dir=f"{DATASET}/visualizations_smoothed_refined/n_clusters50_max_dist_0.6")
+    evaluate_cluster(num_clusters=200, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = f'{DATASET}/cluster_outputs_smoothed_refined/n_clusters200_max_dist_0.6', visualization_dir=f"{DATASET}/visualizations_smoothed_refined/n_clusters200_max_dist_0.6")
 
     # with open('c4/cluster_outputs_frequency_only/n_clusters50_distance_threshold_None/cluster_id_to_evaluation_split.json', 'r') as f:
     #     cluster_to_evaluation_split = json.load(f)
