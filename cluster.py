@@ -58,7 +58,7 @@ def find_dissimilarity_matrix(all_layer_repr, similarity_method= 'cosine'):
         # Compute the cosine similarity using matrix multiplication
         # similarity is now a matrix of shape (N, N) containing pairwise cosine similarities
         print('Computing cosine similarity')
-        similarity = torch.mm(input1_norm, input2_norm.t()).abs()
+        similarity = torch.mm(input1_norm, input2_norm.t())
         print('Done computing similarity matrix. Shape:', similarity.shape)
     elif similarity_method == 'pearson':
         # compute the pearson correlation coefficient 
@@ -91,7 +91,7 @@ def get_cluster_top_tokens(all_layer_repr, tokenizer, cluster_labels, num_cluste
             # print(indices)
             # aggregate activations of neurons in the cluster
             # TODO: check if abs() is better
-            cluster_activations = torch.sum(all_layer_repr[indices].abs(), dim=0) # D
+            cluster_activations = torch.sum(all_layer_repr[indices], dim=0) # D
             # find the indices of the top-k tokens
             top_k_indices = torch.topk(cluster_activations, k=num_top_tokens)[1]
             # convert indices to tokens

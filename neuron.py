@@ -5,7 +5,7 @@ import json
 from transformers import AutoTokenizer, BertModel, BertConfig
 import fasttext.util
 
-from utils import load_dataset_from_hf, load_and_mask_neuron_repr
+from utils import load_dataset_from_hf, load_and_mask_neuron_repr, load_neuron_repr
 from constants import *
 
 def get_neuron_representations(model, tokenizer, config, dataset, device, token_count_only=False):
@@ -99,7 +99,7 @@ def augment_neuron_repr_with_token_similarity(tokenizer, topk_neigh=5, score_dis
     # load all vocab
     vocab = tokenizer.get_vocab()  # token to id dict
     # load neuron representations
-    all_layer_repr = load_and_mask_neuron_repr()  # (all_num_neurons, vocab_size)
+    all_layer_repr = load_neuron_repr()  # (all_num_neurons, vocab_size)
     with open(f'{NEURON_REPR_DIR}/token_ids_to_keep.json', 'r') as f:
         token_ids_kept = json.load(f)
 
