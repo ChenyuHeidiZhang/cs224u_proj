@@ -157,29 +157,29 @@ def plot_causal_intervention(filepath, num_clusters, distance_threshold, deactiv
     average_MLM_loss_nothing_turned_off = []
     average_MLM_loss_cluster_turned_off = []
     average_MLM_loss_random_turned_off = []
-    # average_MLM_loss_random_neuron_turned_off = []
-    # average_MLM_loss_random_layer_dist_neuron_turned_off = []
+    average_MLM_loss_random_neuron_turned_off = []
+    average_MLM_loss_random_layer_dist_neuron_turned_off = []
     for cluster_id in cluster_id_to_average_MLM_loss:
         cluster_ids.append(cluster_id)
         average_MLM_loss_nothing_turned_off.append(cluster_id_to_average_MLM_loss[cluster_id]["nothing_turned_off"])
         average_MLM_loss_cluster_turned_off.append(cluster_id_to_average_MLM_loss[cluster_id]["cluster_turned_off"])
         average_MLM_loss_random_turned_off.append(cluster_id_to_average_MLM_loss[cluster_id]["random_position_dist_neuron_turned_off_mean"])
-
-        # average_MLM_loss_random_neuron_turned_off.append(cluster_id_to_average_MLM_loss[cluster_id]["random_neuron_turned_off_mean"])
-        # average_MLM_loss_random_layer_dist_neuron_turned_off.append(cluster_id_to_average_MLM_loss[cluster_id]["random_layer_dist_neuron_turned_off_mean"])
+        average_MLM_loss_random_neuron_turned_off.append(cluster_id_to_average_MLM_loss[cluster_id]["random_neuron_turned_off_mean"])
+        average_MLM_loss_random_layer_dist_neuron_turned_off.append(cluster_id_to_average_MLM_loss[cluster_id]["random_layer_dist_neuron_turned_off_mean"])
     plt.figure(figsize=(20, 10))
-    plt.scatter(cluster_ids, average_MLM_loss_nothing_turned_off, label="nothing_turned_off")
-    plt.scatter(cluster_ids, average_MLM_loss_cluster_turned_off, label="cluster_turned_off")
-    plt.scatter(cluster_ids, average_MLM_loss_random_turned_off, label="random_position_dist_neuron_turned_off")
-    # plt.scatter(cluster_ids, average_MLM_loss_random_neuron_turned_off, label="random_neuron_turned_off")
-    # plt.scatter(cluster_ids, average_MLM_loss_random_layer_dist_neuron_turned_off, label="random_layer_dist_neuron_turned_off")
+    plt.scatter(cluster_ids, average_MLM_loss_nothing_turned_off, label="nothing_turned_off", alpha=0.5)
+    plt.scatter(cluster_ids, average_MLM_loss_cluster_turned_off, label="cluster_turned_off", alpha=0.5)
+    plt.scatter(cluster_ids, average_MLM_loss_random_turned_off, label="random_position_dist_neuron_turned_off", alpha=0.5)
+    # plt.scatter(cluster_ids, average_MLM_loss_random_neuron_turned_off, label="random_neuron_turned_off", alpha=0.5)
+    # plt.scatter(cluster_ids, average_MLM_loss_random_layer_dist_neuron_turned_off, label="random_layer_dist_neuron_turned_off", alpha=0.5)
     plt.xlabel("Cluster id")
     plt.ylabel("Average MLM loss")
     plt.title("Causal interventions: different MLM loss")
     plt.legend()
-    plt.savefig(os.path.join(dir, f"deactivate_{deactivate_strategy}_causal_intervention.png"))
+    plt.savefig(os.path.join(dir, f"deactivate_{deactivate_strategy}_causal_intervention_all_random_baselines.png"))
 
 
 if __name__=="__main__":
     # plot_causal_intervention("c4/cluster_outputs/n_clusters50_distance_threshold_None/deactivate_mean_cluster_id_to_average_MLM_loss.json", 50, None)
-    plot_causal_intervention("c4/cluster_outputs/n_clusters50_distance_threshold_None_tfidf_filter10k/deactivate_mean_cluster_id_to_average_MLM_loss.json", 50, None, dir="c4/visualizations/n_clusters50_distance_threshold_None_tfidf_filter10k")
+    # plot_causal_intervention("c4/cluster_outputs/n_clusters50_distance_threshold_None_tfidf_filter10k/deactivate_mean_cluster_id_to_average_MLM_loss.json", 50, None, dir="c4/visualizations/n_clusters50_distance_threshold_None_tfidf_filter10k")
+    plot_causal_intervention("c4/cluster_outputs_smoothed/n_clusters50_distance_threshold_None/deactivate_mean_cluster_id_to_average_MLM_loss.json", 50, None, dir="c4/visualizations/n_clusters50_distance_threshold_None_smoothed")
