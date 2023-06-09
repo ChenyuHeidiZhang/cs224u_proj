@@ -170,7 +170,7 @@ def evaluate_cluster(num_clusters=3, distance_threshold=None, mask_strategy="top
     print("Model loaded")
 
     # load data
-    dataset = utils.load_dataset_from_hf(dev=(DATASET=='yelp'))
+    dataset = utils.load_dataset_from_hf(dev=False)
 
     # check if os.path.join(dir, 'cluster_id_to_evaluation_split.json') exists if exists ,load it
     if os.path.exists(os.path.join(dir, 'cluster_id_to_evaluation_split.json')):
@@ -320,14 +320,14 @@ if __name__ == "__main__":
     # evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=32, deactivate_strategy="mean", dir = 'c4/cluster_outputs/n_clusters50_distance_threshold_None')
     # evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=32, deactivate_strategy="mean", dir = 'c4/cluster_outputs_smoothed/n_clusters50_distance_threshold_None_tfidf')
     # frequency only
-    evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = 'c4/cluster_outputs_frequency_only/n_clusters50_distance_threshold_None', visualization_dir="c4/visualizations_frequency_only/n_clusters50_distance_threshold_None")
-    evaluate_cluster(num_clusters=200, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = 'c4/cluster_outputs_frequency_only/n_clusters200_distance_threshold_None', visualization_dir="c4/visualizations_frequency_only/n_clusters200_distance_threshold_None")
+    # evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = f'{DATASET}/cluster_outputs_frequency_only/n_clusters50_distance_threshold_None', visualization_dir=f"{DATASET}/visualizations_frequency_only/n_clusters50_distance_threshold_None")
+    # evaluate_cluster(num_clusters=200, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = f'{DATASET}/cluster_outputs_frequency_only/n_clusters200_distance_threshold_None', visualization_dir=f"{DATASET}/visualizations_frequency_only/n_clusters200_distance_threshold_None")
     # smoothed
-    # evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = 'c4/cluster_outputs_smoothed/n_clusters50_distance_threshold_None', visualization_dir="c4/visualizations_smoothed/n_clusters50_distance_threshold_None")
-    # evaluate_cluster(num_clusters=200, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = 'c4/cluster_outputs_smoothed/n_clusters200_distance_threshold_None', visualization_dir="c4/visualizations_smoothed/n_clusters200_distance_threshold_None")
+    evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = f'{DATASET}/cluster_outputs_smoothed/n_clusters50_distance_threshold_None', visualization_dir=f"{DATASET}/visualizations_smoothed/n_clusters50_distance_threshold_None")
+    evaluate_cluster(num_clusters=200, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = f'{DATASET}/cluster_outputs_smoothed/n_clusters200_distance_threshold_None', visualization_dir=f"{DATASET}/visualizations_smoothed/n_clusters200_distance_threshold_None")
     # smoothed refined
-    # evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = 'c4/cluster_outputs_smoothed_refined/n_clusters50_max_dist_0.6', visualization_dir="c4/visualizations_smoothed_refined/n_clusters50_max_dist_0.6")
-    # evaluate_cluster(num_clusters=200, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = 'c4/cluster_outputs_smoothed_refined/n_clusters200_max_dist_0.6', visualization_dir="c4/visualizations_smoothed_refined/n_clusters200_max_dist_0.6")
+    evaluate_cluster(num_clusters=50, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = f'{DATASET}/cluster_outputs_smoothed_refined/n_clusters50_max_dist_0.6', visualization_dir=f"{DATASET}/visualizations_smoothed_refined/n_clusters50_max_dist_0.6")
+    evaluate_cluster(num_clusters=200, distance_threshold=None, mask_strategy="top", num_repeat=5, evaluation_size=96, deactivate_strategy="mean", dir = f'{DATASET}/cluster_outputs_smoothed_refined/n_clusters200_max_dist_0.6', visualization_dir=f"{DATASET}/visualizations_smoothed_refined/n_clusters200_max_dist_0.6")
 
     # with open('c4/cluster_outputs_frequency_only/n_clusters50_distance_threshold_None/cluster_id_to_evaluation_split.json', 'r') as f:
     #     cluster_to_evaluation_split = json.load(f)
