@@ -67,7 +67,7 @@ def save_cluster(cluster_labels, num_clusters, distance_threshold):
     with open(os.path.join(dir, 'cluster_id_to_neurons.json'), 'w') as f:
         json.dump(clusters, f)
 
-def load_cluster(num_clusters, distance_threshold):
+def load_cluster(num_clusters, distance_threshold=None):
     dir = f'{CLUSTER_OUTPUT_DIR}/n_clusters{num_clusters}_distance_threshold_{distance_threshold}/'
     with open(os.path.join(dir, 'cluster_id_to_neurons.json'), 'r') as f:
         clusters = json.load(f)

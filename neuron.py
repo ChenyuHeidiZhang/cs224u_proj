@@ -48,9 +48,8 @@ def get_neuron_representations(model, tokenizer, config, dataset, device, token_
 
     if not os.path.exists(NEURON_REPR_DIR):
         os.makedirs(NEURON_REPR_DIR)
-    tokens_count = tokens_count.cpu().tolist()
     with open(f'{NEURON_REPR_DIR}/tokens_count.json', 'w') as f:
-        json.dump(tokens_count, f)
+        json.dump(tokens_count.cpu().tolist(), f)
     if token_count_only:
         return None
 
@@ -145,7 +144,7 @@ def main(token_count_only=False):
     # HIDDEN_SIZE = config.hidden_size
     print('VOCAB_SIZE:', config.vocab_size, 'MAX_LENGTH:', config.max_position_embeddings, 'NUM_HIDDEN_LAYERS:', config.num_hidden_layers, 'HIDDEN_SIZE:', config.hidden_size)
 
-    dataset = load_dataset_from_hf(dev=(DATASET=='yelp'))
+    dataset = load_dataset_from_hf(dev=False)
     print("Dataset loaded")
 
     print("Start computing neuron representations")
@@ -153,11 +152,11 @@ def main(token_count_only=False):
 
 
 if __name__ == "__main__":
-    # main(token_count_only=True)
-    # filter_neuron_repr_with_token_count(min_count=400)
+    main(token_count_only=False)
+    # filter_neuron_repr_with_token_count(min_count=10)
 
-    tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
-    augment_neuron_repr_with_token_similarity(tokenizer, topk_neigh=5, score_discount=0.5)
+    # tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+    # augment_neuron_repr_with_token_similarity(tokenizer, topk_neigh=5, score_discount=0.5)
 
 
     # # load neuron representations

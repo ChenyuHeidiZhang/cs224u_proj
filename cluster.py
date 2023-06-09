@@ -72,7 +72,7 @@ def find_dissimilarity_matrix(all_layer_repr, similarity_method= 'cosine'):
     return dissimilarity
 
 
-def get_cluster_top_tokens(all_layer_repr, tokenizer, cluster_labels, num_clusters, distance_threshold, num_top_tokens, token_filtered=False):
+def get_cluster_top_tokens(all_layer_repr, tokenizer, cluster_labels, num_clusters, distance_threshold, num_top_tokens, token_filtered=True):
     dir = f'{CLUSTER_OUTPUT_DIR}/n_clusters{num_clusters}_distance_threshold_{distance_threshold}/'
     # dir = f'{CLUSTER_OUTPUT_DIR}/n_clusters{num_clusters}_threshold1/'
     if not os.path.exists(dir):
@@ -104,7 +104,7 @@ def get_cluster_top_tokens(all_layer_repr, tokenizer, cluster_labels, num_cluste
     return cluster_id_to_top_token_indices
 
 
-def compute_clusters(all_layer_repr, tokenizer, num_clusters=3, distance_threshold=None, num_top_tokens=10, token_filtered=False):
+def compute_clusters(all_layer_repr, tokenizer, num_clusters=3, distance_threshold=None, num_top_tokens=10, token_filtered=True):
     # input tensors all_layer_repr is of shape (N, D)
     # where N is the numbers of neurons (num_layers * num_neurons_per_layer = 9984), and D is the dimensionality (vocab size)
 
