@@ -86,7 +86,8 @@ def filter_neuron_repr_with_token_count(min_count=50):
         with open(f'{NEURON_REPR_DIR}/neuron_repr_{i}_filtered.json', 'w') as f:
             json.dump(neuron_repr, f)
 
-    # yelp vocab size for min_count=10: 6693
+    # yelp 10k vocab size for min_count=10: 6693
+    # yelp all test vocab size for min_count=20: 10179
     # c4 vocab size for min_count=400: 15298
 
 
@@ -153,7 +154,7 @@ def main(token_count_only=False):
 
 if __name__ == "__main__":
     main(token_count_only=False)
-    # filter_neuron_repr_with_token_count(min_count=10)
+    # filter_neuron_repr_with_token_count(min_count=20)
 
     # tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
     # augment_neuron_repr_with_token_similarity(tokenizer, topk_neigh=5, score_discount=0.5)
