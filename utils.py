@@ -167,6 +167,13 @@ def make_causal_intervention_table():
             random = loss["average_MLM_loss_random_neuron_turned_off"]
             random_layer = loss["average_MLM_loss_random_layer_dist_neuron_turned_off"]
             random_position = loss["average_MLM_loss_random_position_turned_off"]
+
+            original_model_random_tokens = loss["average_MLM_loss_nothing_turned_off_random_tokens"]
+            cluster_random_tokens = loss["average_MLM_loss_cluster_turned_off_random_tokens"]
+            delta_random_tokens = (cluster_random_tokens - original_model_random_tokens)/original_model_random_tokens
+            delta_random_tokens *= 100
+            
+
             delta_cluster = (cluster - original_model)/original_model
             delta_random = (random - original_model)/original_model
             delta_random_layer = (random_layer - original_model)/original_model
@@ -175,7 +182,8 @@ def make_causal_intervention_table():
             delta_random *= 100
             delta_random_layer *= 100
             delta_random_position *= 100
-            print(f"{num_clusters} & {method} & {delta_cluster:.2f} & {delta_random:.2f} & {delta_random_layer:.2f} & {delta_random_position:.2f} \\\\")
+            print(f"{num_clusters} & {method} & {delta_random_tokens:.2f} {delta_cluster:.2f}\\\\")
+            # print(f"{num_clusters} & {method} & {delta_cluster:.2f} & {delta_random:.2f} & {delta_random_layer:.2f} & {delta_random_position:.2f} \\\\")
 
 
 if __name__=="__main__":
