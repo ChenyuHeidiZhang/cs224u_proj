@@ -18,12 +18,13 @@ def refine_clusters(num_clusters=50, max_distance_threshold=0.6, topk_tokens=10,
     # load map from cluster id to list of neuron ids
     clusters = utils.load_cluster(num_clusters=num_clusters)
 
-    # load neuron representations
-    all_layer_repr = utils.load_neuron_repr(filtered=True)  # (all_num_neurons, vocab_size)
+    # load neuron representations; use original filtered representation even if augmented representation is used for clustering
+    all_layer_repr = utils.load_neuron_repr(filtered=token_filtered)  # (all_num_neurons, vocab_size)
     # normalize each neuron's representation to be a unit vector
     all_layer_repr_norm = torch.nn.functional.normalize(all_layer_repr, p=2, dim=1)
 
     new_clusters = {}
+    all_distance_history = []
 
     for cluster_idx, cluster in clusters.items():
         # set max distance to be a large number
@@ -45,18 +46,42 @@ def refine_clusters(num_clusters=50, max_distance_threshold=0.6, topk_tokens=10,
         print('remaining num neurons in cluster {}: {}'.format(cluster_idx, len(cluster_neurons)))
         print("Cluster {}: max distance to cluster center is {}".format(cluster_idx, max_distance))
         print(distance_history)
+        all_distance_history.append(distance_history + [len(cluster)])
 
         new_clusters[cluster_idx] = cluster_neurons
 
-    # save new clusters
-    out_path = f'{REFINED_DIR}/n_clusters{num_clusters}_max_dist_{max_distance_threshold}'
-    if not os.path.exists(out_path):
-        os.makedirs(out_path)
-    with open(f'{out_path}/cluster_id_to_neurons.json', 'w') as f:
-        json.dump(new_clusters, f)
+    # save distance history
+    with open(f'{VISUALIZATION_DIR}/n_clusters{num_clusters}_distance_threshold_None/refinement_distance_history.json', 'w') as f:
+        json.dump(all_distance_history, f)
+
+    # # save new clusters
+    # out_path = f'{REFINED_DIR}/n_clusters{num_clusters}_max_dist_{max_distance_threshold}'
+    # if not os.path.exists(out_path):
+    #     os.makedirs(out_path)
+    # with open(f'{out_path}/cluster_id_to_neurons.json', 'w') as f:
+    #     json.dump(new_clusters, f)
 
     # compute topk tokens for each new cluster
-    compute_topk_tokens(new_clusters, all_layer_repr_norm, num_clusters=num_clusters, max_distance_threshold=max_distance_threshold, topk_tokens=topk_tokens, token_filtered=token_filtered)
+    # compute_topk_tokens(new_clusters, all_layer_repr_norm, num_clusters=num_clusters, max_distance_threshold=max_distance_threshold, topk_tokens=topk_tokens, token_filtered=token_filtered)
+
+
+def plot_distance_history(num_clusters=50):
+    with open(f'{VISUALIZATION_DIR}/n_clusters{num_clusters}_distance_threshold_None/refinement_distance_history.json', 'r') as f:
+        all_distance_history = json.load(f)
+
+    import matplotlib.pyplot as plt
+    import numpy as np
+    plt.figure()
+    # plot distance history for 8 random clusters
+    # the last element in each list is the number of neurons in the cluster
+    random_cluster_ids = np.random.choice(np.arange(num_clusters), size=8, replace=False)
+    for i, cluster_id in enumerate(random_cluster_ids):
+        num_neurons = all_distance_history[cluster_id].pop()
+        plt.plot(np.arange(len(all_distance_history[cluster_id])), all_distance_history[cluster_id], label='c {}: {} neurons'.format(cluster_id, num_neurons))
+    plt.xlabel('iteration')
+    plt.ylabel('max distance to cluster center')
+    plt.legend()
+    plt.savefig(f'{VISUALIZATION_DIR}/n_clusters{num_clusters}_distance_threshold_None/refinement_distance_history.png')
 
 
 def compute_topk_tokens(new_clusters, all_layer_repr_norm, num_clusters=50, max_distance_threshold=0.5, topk_tokens=10, token_filtered=True):
@@ -87,4 +112,5 @@ def compute_topk_tokens(new_clusters, all_layer_repr_norm, num_clusters=50, max_
 
 
 if __name__ == '__main__':
-    refine_clusters(num_clusters=50, max_distance_threshold=0.6, topk_tokens=30)
+    # refine_clusters(num_clusters=50, max_distance_threshold=0, topk_tokens=30)
+    plot_distance_history(num_clusters=50)
