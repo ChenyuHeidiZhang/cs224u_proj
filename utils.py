@@ -153,3 +153,30 @@ def save_cluster_to_MLM_loss(cluster_id_to_MLM_loss, num_clusters, distance_thre
         os.makedirs(dir)
     with open(os.path.join(dir, f'deactivate_{deactivate_strategy}_cluster_id_to_average_MLM_loss.json'), 'w') as f:
         json.dump(cluster_id_to_MLM_loss, f, indent=4)
+
+def make_causal_intervention_table():
+    for num_clusters in [50, 200]:
+        for method in ["frequency_only", "smoothed", "smoothed_refined", "smoothed_tfidf"]:
+            dir = f"{DATASET}/visualizations_{method}/n_clusters{num_clusters}_distance_threshold_None"
+            if method == "smoothed_refined":
+                dir = f"{DATASET}/visualizations_{method}/n_clusters{num_clusters}_max_dist_0.6"
+            with open(os.path.join(dir, "aggregated_MLM_loss_mean_causal_intervention.json"), 'r') as f:
+                loss = json.load(f)
+            original_model = loss["average_MLM_loss_nothing_turned_off"]
+            cluster = loss["average_MLM_loss_cluster_turned_off"]
+            random = loss["average_MLM_loss_random_neuron_turned_off"]
+            random_layer = loss["average_MLM_loss_random_layer_dist_neuron_turned_off"]
+            random_position = loss["average_MLM_loss_random_position_turned_off"]
+            delta_cluster = (cluster - original_model)/original_model
+            delta_random = (random - original_model)/original_model
+            delta_random_layer = (random_layer - original_model)/original_model
+            delta_random_position = (random_position - original_model)/original_model
+            delta_cluster *= 100
+            delta_random *= 100
+            delta_random_layer *= 100
+            delta_random_position *= 100
+            print(f"{num_clusters} & {method} & {delta_cluster:.2f} & {delta_random:.2f} & {delta_random_layer:.2f} & {delta_random_position:.2f} \\\\")
+
+
+if __name__=="__main__":
+    make_causal_intervention_table()
